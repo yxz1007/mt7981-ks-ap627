@@ -1,0 +1,269 @@
+//#############################################################################################//
+//A60931(4 Lane PCIe) Bank Selection from I2C
+//#############################################################################################//
+// PCIe I2C Device Addr : 0x70/0x71/0x72/0x73 for Lane0/1/2/3
+// Bank 1: PHYD
+// Bank 2: PHYD2
+// Bank 3: PHYA
+// Bank 4: PHYA_DA
+// Bank 6: SPLL
+// Bank 7: GLB
+//###############################//
+//PCI-e Init
+//###############################//
+I2C  0x70  0xFC[31:24]  0x20   RW                                     //Change bank address to 0x20
+I2C  0x70  0x00[04:04]  0x00   RW  rg_ssusb_pcie_mode_sel             //從EVB上修正後就可以去除此patch [AR172 -> R1777+R1780]
+I2C  0x70  0x00[03:03]  0x01   RW  rg_ssusb_force_pcie_mode_sel       //從EVB上修正後就可以去除此patch [AR172 -> R1777+R1780]
+I2C  0x70  0x00[02:01]  0x00   RW  rg_ssusb_force_phy_mode             //rg_ssusb_force_phy_mode=0b0, PCI-e mode
+I2C  0x70  0x00[00:00]  0x01   RW  rg_ssusb_force_phy_mode_en          //rg_ssusb_force_phy_mode_en=0b1
+//I2C  0x70  0x3C[01:01]  0x00   RW  rg_pcie_l1ss_en                    //Force PCI-e L1SS disable
+//I2C  0x70  0x3C[00:00]  0x01   RW  rg_pcie_force_l1ss_en              //Force PCI-e L1SS disable
+//I2C  0x71  0xFC[31:24]  0x20   RW                                     //Change bank address to 0x20
+//I2C  0x71  0x00[04:04]  0x00   RW  rg_ssusb_pcie_mode_sel             //從EVB上修正後就可以去除此patch [AR172 -> R1777+R1780]
+//I2C  0x71  0x00[03:03]  0x01   RW  rg_ssusb_force_pcie_mode_sel       //從EVB上修正後就可以去除此patch [AR172 -> R1777+R1780]
+//I2C  0x71  0x00[02:01]  0x00   RW  rg_ssusb_force_phy_mode             //rg_ssusb_force_phy_mode=0b0, PCI-e mode
+//I2C  0x71  0x00[00:00]  0x01   RW  rg_ssusb_force_phy_mode_en          //rg_ssusb_force_phy_mode_en=0b1
+//I2C  0x71  0x3C[01:01]  0x00   RW  rg_pcie_l1ss_en                    //Force PCI-e L1SS disable
+//I2C  0x71  0x3C[00:00]  0x01   RW  rg_pcie_force_l1ss_en              //Force PCI-e L1SS disable
+//I2C  0x72  0xFC[31:24]  0x20   RW                                     //Change bank address to 0x20
+//I2C  0x72  0x00[04:04]  0x00   RW  rg_ssusb_pcie_mode_sel             //從EVB上修正後就可以去除此patch [AR172 -> R1777+R1780]
+//I2C  0x72  0x00[03:03]  0x01   RW  rg_ssusb_force_pcie_mode_sel       //從EVB上修正後就可以去除此patch [AR172 -> R1777+R1780]
+//I2C  0x72  0x00[02:01]  0x00   RW  rg_ssusb_force_phy_mode             //rg_ssusb_force_phy_mode=0b0, PCI-e mode
+//I2C  0x72  0x00[00:00]  0x01   RW  rg_ssusb_force_phy_mode_en          //rg_ssusb_force_phy_mode_en=0b1
+//I2C  0x72  0x3C[01:01]  0x00   RW  rg_pcie_l1ss_en                    //Force PCI-e L1SS disable
+//I2C  0x72  0x3C[00:00]  0x01   RW  rg_pcie_force_l1ss_en              //Force PCI-e L1SS disable
+//I2C  0x73  0xFC[31:24]  0x20   RW                                     //Change bank address to 0x20
+//I2C  0x73  0x00[04:04]  0x00   RW  rg_ssusb_pcie_mode_sel             //從EVB上修正後就可以去除此patch [AR172 -> R1777+R1780]
+//I2C  0x73  0x00[03:03]  0x01   RW  rg_ssusb_force_pcie_mode_sel       //從EVB上修正後就可以去除此patch [AR172 -> R1777+R1780]
+//I2C  0x73  0x00[02:01]  0x00   RW  rg_ssusb_force_phy_mode             //rg_ssusb_force_phy_mode=0b0, PCI-e mode
+//I2C  0x73  0x00[00:00]  0x01   RW  rg_ssusb_force_phy_mode_en          //rg_ssusb_force_phy_mode_en=0b1
+//I2C  0x73  0x3C[01:01]  0x00   RW  rg_pcie_l1ss_en                    //Force PCI-e L1SS disable
+//I2C  0x73  0x3C[00:00]  0x01   RW  rg_pcie_force_l1ss_en              //Force PCI-e L1SS disable
+I2C  0x70  0xFC[31:24]  0x30   RW                                     //Change bank address to 0x30
+I2C  0x70  0x04[29:29]  0x01   RW  RG_VUSB10_ON                       //SSUSB 1.0V power ON(LN0)
+I2C  0x71  0xFC[31:24]  0x30   RW                                     //Change bank address to 0x30
+I2C  0x71  0x04[29:29]  0x01   RW  RG_VUSB10_ON                       //SSUSB 1.0V power ON(LN1)
+I2C  0x72  0xFC[31:24]  0x30   RW                                     //Change bank address to 0x30
+I2C  0x72  0x04[29:29]  0x01   RW  RG_VUSB10_ON                       //SSUSB 1.0V power ON(LN2)
+I2C  0x73  0xFC[31:24]  0x30   RW                                     //Change bank address to 0x30
+I2C  0x73  0x04[29:29]  0x01   RW  RG_VUSB10_ON                       //SSUSB 1.0V power ON(LN3)
+I2C  0x70  0xFC[31:24]  0x70   RW                                     //Change bank address to 0x70
+I2C  0x70  0x88[03:02]  0x02   RW                                     //Pipe reset, clk driving current
+I2C  0x70  0x88[05:04]  0x02   RW                                     //Data lane 0 driving current
+I2C  0x70  0x88[07:06]  0x02   RW                                     //Data lane 1 driving current
+I2C  0x70  0x88[09:08]  0x02   RW                                     //Data lane 2 driving current
+I2C  0x70  0x88[11:10]  0x02   RW                                     //Data lane 3 driving current
+I2C  0x70  0x9C[04:00]  0x06   RW  rg_ssusb_ckphase                   //PCLK phase 0x00~0x1F
+//###############################//
+//PCI-e PLL BW
+//###############################//
+I2C  0x70  0xFC[31:24]  0x40   RW                                     //Change bank address to 0x40
+I2C  0x70  0x0C[19:16]  0x08   RW  RG_SSUSB_PLL_IC_PE2D
+I2C  0x70  0x10[27:24]  0x0B   RW  RG_SSUSB_PLL_IR_PE2D
+I2C  0x70  0x0C[31:30]  0x01   RW  RG_SSUSB_PLL_BR_PE2D
+I2C  0x71  0xFC[31:24]  0x40   RW                                     //Change bank address to 0x40
+I2C  0x71  0x0C[19:16]  0x08   RW  RG_SSUSB_PLL_IC_PE2D
+I2C  0x71  0x10[27:24]  0x0B   RW  RG_SSUSB_PLL_IR_PE2D
+I2C  0x71  0x0C[31:30]  0x01   RW  RG_SSUSB_PLL_BR_PE2D
+I2C  0x72  0xFC[31:24]  0x40   RW                                     //Change bank address to 0x40
+I2C  0x72  0x0C[19:16]  0x08   RW  RG_SSUSB_PLL_IC_PE2D
+I2C  0x72  0x10[27:24]  0x0B   RW  RG_SSUSB_PLL_IR_PE2D
+I2C  0x72  0x0C[31:30]  0x01   RW  RG_SSUSB_PLL_BR_PE2D
+I2C  0x73  0xFC[31:24]  0x40   RW                                     //Change bank address to 0x40
+I2C  0x73  0x0C[19:16]  0x08   RW  RG_SSUSB_PLL_IC_PE2D
+I2C  0x73  0x10[27:24]  0x0B   RW  RG_SSUSB_PLL_IR_PE2D
+I2C  0x73  0x0C[31:30]  0x01   RW  RG_SSUSB_PLL_BR_PE2D
+//###############################//
+//EQ_Setting
+//###############################//
+I2C  0x70  0xFC[31:24]  0x10   RW                                     //Change bank address to 0x10
+I2C  0x70  0x7C[31:28]  0x03   RW  EQ_DLEQ_LFI_GEN2                   //
+I2C  0x70  0x7C[27:24]  0x03   RW  EQ_DLEQ_LFI_GEN1                   //
+I2C  0x71  0xFC[31:24]  0x10   RW                                     //Change bank address to 0x10
+I2C  0x71  0x7C[31:28]  0x03   RW  EQ_DLEQ_LFI_GEN2                   //
+I2C  0x71  0x7C[27:24]  0x03   RW  EQ_DLEQ_LFI_GEN1                   //
+I2C  0x72  0xFC[31:24]  0x10   RW                                     //Change bank address to 0x10
+I2C  0x72  0x7C[31:28]  0x03   RW  EQ_DLEQ_LFI_GEN2                   //
+I2C  0x72  0x7C[27:24]  0x03   RW  EQ_DLEQ_LFI_GEN1                   //
+I2C  0x73  0xFC[31:24]  0x10   RW                                     //Change bank address to 0x10
+I2C  0x73  0x7C[31:28]  0x03   RW  EQ_DLEQ_LFI_GEN2                   //
+I2C  0x73  0x7C[27:24]  0x03   RW  EQ_DLEQ_LFI_GEN1                   //
+
+//###############################//
+//BBPD LDO Turn OFF
+//###############################//
+I2C  0x70  0xFC[31:24]  0x30   RW                                    //Change bank address to 0x30
+I2C  0x70  0x18[24:24]  0x01   RW RG_SSUSB_LN0_CDR_RESERVE[0]
+I2C  0x71  0xFC[31:24]  0x30   RW                                    //Change bank address to 0x30
+I2C  0x71  0x18[24:24]  0x01   RW RG_SSUSB_LN0_CDR_RESERVE[0]
+I2C  0x72  0xFC[31:24]  0x30   RW                                    //Change bank address to 0x30
+I2C  0x72  0x18[24:24]  0x01   RW RG_SSUSB_LN0_CDR_RESERVE[0]
+I2C  0x73  0xFC[31:24]  0x30   RW                                    //Change bank address to 0x30
+I2C  0x73  0x18[24:24]  0x01   RW RG_SSUSB_LN0_CDR_RESERVE[0]
+
+//###############################//
+//Force tphy_speed to Gen2 (workaround for RX E0/E1 offset)
+//###############################//
+//I2C  0x70  0xFC[31:24]  0x70   RW                                     //Change bank address to 0x70
+//I2C  0x70  0x00[16:16]  0x01   RW  rg_ssusb_glb_force_tphy_speed      //Force_tphy_speed = 1’b1
+//I2C  0x70  0x00[18:17]  0x02   RW  rg_ssusb_glb_tphy_speed            //Force_tphy_speed = 2’b01 (Gen1)//Force_tphy_speed = 2’b10 (Gen2)
+//###############################//
+//Force Rate to Gen2
+//###############################//
+//I2C  0x70  0xFC[31:24]  0x20   RW                                     //Change bank address to 0x20
+//I2C  0x70  0x00[06:06]  0x01   RW  rg_ssusb_rate                      //0b0: Gen1, 0b1: Gen2
+//I2C  0x70  0x00[05:05]  0x01   RW  rg_ssusb_force_rate                //
+//I2C  0x71  0xFC[31:24]  0x20   RW                                     //Change bank address to 0x20
+//I2C  0x71  0x00[06:06]  0x01   RW  rg_ssusb_rate                      //0b0: Gen1, 0b1: Gen2
+//I2C  0x71  0x00[05:05]  0x01   RW  rg_ssusb_force_rate                //
+//I2C  0x72  0xFC[31:24]  0x20   RW                                     //Change bank address to 0x20
+//I2C  0x72  0x00[06:06]  0x01   RW  rg_ssusb_rate                      //0b0: Gen1, 0b1: Gen2
+//I2C  0x72  0x00[05:05]  0x01   RW  rg_ssusb_force_rate                //
+//I2C  0x73  0xFC[31:24]  0x20   RW                                     //Change bank address to 0x20
+//I2C  0x73  0x00[06:06]  0x01   RW  rg_ssusb_rate                      //0b0: Gen1, 0b1: Gen2
+//I2C  0x73  0x00[05:05]  0x01   RW  rg_ssusb_force_rate                //
+//###############################//
+//Force PIPE signal
+//###############################//
+//I2C  0x70  0xFC[31:24]  0x10   RW                                     //Change bank address to 0x10
+//I2C  0x70  0x40[25:24]  0x00   RW  powerdown                          //
+//I2C  0x70  0x40[20:20]  0x01   RW  pipe_sel                           //
+//I2C  0x71  0xFC[31:24]  0x10   RW                                     //Change bank address to 0x10
+//I2C  0x71  0x40[25:24]  0x00   RW  powerdown                          //
+//I2C  0x71  0x40[20:20]  0x01   RW  pipe_sel                           //
+//I2C  0x72  0xFC[31:24]  0x10   RW                                     //Change bank address to 0x10
+//I2C  0x72  0x40[25:24]  0x00   RW  powerdown                          //
+//I2C  0x72  0x40[20:20]  0x01   RW  pipe_sel                           //
+//I2C  0x73  0xFC[31:24]  0x10   RW                                     //Change bank address to 0x10
+//I2C  0x73  0x40[25:24]  0x00   RW  powerdown                          //
+//I2C  0x73  0x40[20:20]  0x01   RW  pipe_sel                           //
+
+//###############################//
+//Relase Force Rate
+//###############################//
+//I2C  0x70  0xFC[31:24]  0x20   RW                                     //Change bank address to 0x20
+//I2C  0x70  0x00[06:06]  0x00   RW  rg_ssusb_rate                      //0b0: Gen1, 0b1: Gen2
+//I2C  0x70  0x00[05:05]  0x00   RW  rg_ssusb_force_rate                //
+//I2C  0x71  0xFC[31:24]  0x20   RW                                     //Change bank address to 0x20
+//I2C  0x71  0x00[06:06]  0x00   RW  rg_ssusb_rate                      //0b0: Gen1, 0b1: Gen2
+//I2C  0x71  0x00[05:05]  0x00   RW  rg_ssusb_force_rate                //
+//I2C  0x72  0xFC[31:24]  0x20   RW                                     //Change bank address to 0x20
+//I2C  0x72  0x00[06:06]  0x00   RW  rg_ssusb_rate                      //0b0: Gen1, 0b1: Gen2
+//I2C  0x72  0x00[05:05]  0x00   RW  rg_ssusb_force_rate                //
+//I2C  0x73  0xFC[31:24]  0x20   RW                                     //Change bank address to 0x20
+//I2C  0x73  0x00[06:06]  0x00   RW  rg_ssusb_rate                      //0b0: Gen1, 0b1: Gen2
+//I2C  0x73  0x00[05:05]  0x00   RW  rg_ssusb_force_rate                //
+////###############################//
+////Release Force PIPE signal
+////###############################//
+//I2C  0x70  0xFC[31:24]  0x10   RW                                     //Change bank address to 0x10
+//I2C  0x70  0x40[20:20]  0x00   RW  pipe_sel                           //
+//I2C  0x71  0xFC[31:24]  0x10   RW                                     //Change bank address to 0x10
+//I2C  0x71  0x40[20:20]  0x00   RW  pipe_sel                           //
+//I2C  0x72  0xFC[31:24]  0x10   RW                                     //Change bank address to 0x10
+//I2C  0x72  0x40[20:20]  0x00   RW  pipe_sel                           //
+//I2C  0x73  0xFC[31:24]  0x10   RW                                     //Change bank address to 0x10
+//I2C  0x73  0x40[20:20]  0x00   RW  pipe_sel                           //
+
+//###############################//
+//Read Calibration Result from eFuse
+//###############################//
+I2C  0x50  0x3F[07:00]  0xFF   RO                                     //Split0 Check Value should be 0x00
+I2C  0x50  0x5F[07:00]  0xFF   RO                                     //Split1 Check Value should be 0x00
+I2C  0x50  0x7F[07:00]  0xFF   RO                                     //Split2 Check Value should be 0x00
+I2C  0x50  0x9F[07:00]  0xFF   RO                                     //Split3 Check Value should be 0x00
+I2C  0x50  0x20[07:00]  0xFF   RO  efs_u2_intr_cal_p0                 //Spilt0(0x20~0x3F),1(0x40~0x5F),2(0x60~0x7F),3(0x80~0x9F)
+I2C  0x50  0x21[07:00]  0xFF   RO  efs_sa_intr_ctrl_p0                //Spilt0(0x20~0x3F),1(0x40~0x5F),2(0x60~0x7F),3(0x80~0x9F)
+I2C  0x50  0x22[07:00]  0xFF   RO  efs_sa_tx_impsel_p0                //Spilt0(0x20~0x3F),1(0x40~0x5F),2(0x60~0x7F),3(0x80~0x9F)
+I2C  0x50  0x23[07:00]  0xFF   RO  efs_sa_rx_impsel_p0                //Spilt0(0x20~0x3F),1(0x40~0x5F),2(0x60~0x7F),3(0x80~0x9F)
+I2C  0x50  0x24[07:00]  0xFF   RO  efs_pcie_intr_ctrl                 //Spilt0(0x20~0x3F),1(0x40~0x5F),2(0x60~0x7F),3(0x80~0x9F)
+I2C  0x50  0x25[07:00]  0xFF   RO  efs_pcie_tx_impsel_ln0             //Spilt0(0x20~0x3F),1(0x40~0x5F),2(0x60~0x7F),3(0x80~0x9F)
+I2C  0x50  0x26[07:00]  0xFF   RO  efs_pcie_rx_impsel_ln0             //Spilt0(0x20~0x3F),1(0x40~0x5F),2(0x60~0x7F),3(0x80~0x9F)
+I2C  0x50  0x27[07:00]  0xFF   RO  efs_pcie_tx_impsel_ln1             //Spilt0(0x20~0x3F),1(0x40~0x5F),2(0x60~0x7F),3(0x80~0x9F)
+I2C  0x50  0x28[07:00]  0xFF   RO  efs_pcie_rx_impsel_ln1             //Spilt0(0x20~0x3F),1(0x40~0x5F),2(0x60~0x7F),3(0x80~0x9F)
+I2C  0x50  0x29[07:00]  0xFF   RO  efs_pcie_tx_impsel_ln2             //Spilt0(0x20~0x3F),1(0x40~0x5F),2(0x60~0x7F),3(0x80~0x9F)
+I2C  0x50  0x2A[07:00]  0xFF   RO  efs_pcie_rx_impsel_ln2             //Spilt0(0x20~0x3F),1(0x40~0x5F),2(0x60~0x7F),3(0x80~0x9F)
+I2C  0x50  0x2B[07:00]  0xFF   RO  efs_pcie_tx_impsel_ln3             //Spilt0(0x20~0x3F),1(0x40~0x5F),2(0x60~0x7F),3(0x80~0x9F)
+I2C  0x50  0x2C[07:00]  0xFF   RO  efs_pcie_rx_impsel_ln3             //Spilt0(0x20~0x3F),1(0x40~0x5F),2(0x60~0x7F),3(0x80~0x9F)
+I2C  0x50  0x2D[07:00]  0xFF   RO  efs_u3_intr_ctrl_p0                //Spilt0(0x20~0x3F),1(0x40~0x5F),2(0x60~0x7F),3(0x80~0x9F)
+I2C  0x50  0x2E[07:00]  0xFF   RO  efs_u3_tx_impsel_p0                //Spilt0(0x20~0x3F),1(0x40~0x5F),2(0x60~0x7F),3(0x80~0x9F)
+I2C  0x50  0x2F[07:00]  0xFF   RO  efs_u3_rx_impsel_p0                //Spilt0(0x20~0x3F),1(0x40~0x5F),2(0x60~0x7F),3(0x80~0x9F)
+//###############################//
+//Set INTR & TX/RX Impedance - P1
+//###############################//
+I2C  0x70  0xFC[31:24]  0x30   RW                                     //Change bank address to 0x30
+I2C  0x70  0x00[26:26]  0x01   RW  RG_SSUSB_INTR_EN                   //INTR_EN
+I2C  0x70  0x00[15:10]  0x2F   RW  RG_SSUSB_IEXT_INTR_CTRL            //Set Iext R selection
+I2C  0x70  0xFC[31:24]  0x10   RW                                     //Change bank address to 0x10
+I2C  0x70  0x10[31:31]  0x01   RW  rg_ssusb_force_tx_impsel           //Force da_ssusb_tx_impsel enable
+I2C  0x70  0x10[28:24]  0x11   RW  rg_ssusb_tx_impsel                 //Set TX Impedance
+I2C  0x70  0x14[31:31]  0x01   RW  rg_ssusb_force_rx_impsel           //Force da_ssusb_rx_impsel enable
+I2C  0x70  0x14[28:24]  0x0F   RW  rg_ssusb_rx_impsel                 //Set RX Impedance
+I2C  0x71  0xFC[31:24]  0x10   RW                                     //Change bank address to 0x10
+I2C  0x71  0x10[31:31]  0x01   RW  rg_ssusb_force_tx_impsel           //Force da_ssusb_tx_impsel enable
+I2C  0x71  0x10[28:24]  0x10   RW  rg_ssusb_tx_impsel                 //Set TX Impedance
+I2C  0x71  0x14[31:31]  0x01   RW  rg_ssusb_force_rx_impsel           //Force da_ssusb_rx_impsel enable
+I2C  0x71  0x14[28:24]  0x0F   RW  rg_ssusb_rx_impsel                 //Set RX Impedance
+I2C  0x72  0xFC[31:24]  0x10   RW                                     //Change bank address to 0x10
+I2C  0x72  0x10[31:31]  0x01   RW  rg_ssusb_force_tx_impsel           //Force da_ssusb_tx_impsel enable
+I2C  0x72  0x10[28:24]  0x10   RW  rg_ssusb_tx_impsel                 //Set TX Impedance
+I2C  0x72  0x14[31:31]  0x01   RW  rg_ssusb_force_rx_impsel           //Force da_ssusb_rx_impsel enable
+I2C  0x72  0x14[28:24]  0x0F   RW  rg_ssusb_rx_impsel                 //Set RX Impedance
+I2C  0x73  0xFC[31:24]  0x10   RW                                     //Change bank address to 0x10
+I2C  0x73  0x10[31:31]  0x01   RW  rg_ssusb_force_tx_impsel           //Force da_ssusb_tx_impsel enable
+I2C  0x73  0x10[28:24]  0x10   RW  rg_ssusb_tx_impsel                 //Set TX Impedance
+I2C  0x73  0x14[31:31]  0x01   RW  rg_ssusb_force_rx_impsel           //Force da_ssusb_rx_impsel enable
+I2C  0x73  0x14[28:24]  0x0F   RW  rg_ssusb_rx_impsel                 //Set RX Impedance
+
+//Only Lane 0 (1 Lane case)
+I2C  0x70  0xFC[31:24]  0x70   RW
+I2C  0x70  0x04[04:04]  0x01   RW  rg_ssusb_glb_rxpll_stable_ln0
+I2C  0x70  0x04[10:10]  0x01   RW  rg_ssusb_glb_phystatus_ini_ln0
+I2C  0x70  0x04[11:11]  0x01   RW  rg_ssusb_glb_clkreq_n_i_mx_ln0
+I2C  0x70  0x04[12:12]  0x01   RW  rg_ssusb_glb_clkreq_n_out_ln0
+I2C  0x70  0x04[13:13]  0x01   RW  rg_ssusb_glb_phystatus_p3_ln0
+I2C  0x70  0x04[14:14]  0x01   RW  rg_ssusb_glb_phystatus_p3_ln0
+I2C  0x70  0x04[15:15]  0x01   RW  rg_ssusb_glb_phystatus_p3_ln0
+I2C  0x70  0x04[16:16]  0x01   RW  rg_ssusb_glb_phystatus_p3_ln0
+I2C  0x70  0x04[17:17]  0x01   RW  rg_ssusb_glb_phystatus_p3_ln0
+I2C  0x70  0x04[18:18]  0x01   RW  rg_ssusb_glb_phystatus_p3_ln0
+I2C  0x70  0x04[19:19]  0x01   RW  rg_ssusb_glb_phystatus_sync_ln0
+I2C  0x70  0x04[20:20]  0x01   RW  rg_ssusb_glb_phystatus_det_ln0
+I2C  0x70  0x04[21:21]  0x01   RW  rg_ssusb_glb_rxstatus_det_ln0
+
+//###############################//
+//PCI-e Host Patch: set PLL reference clock input path, 2015/3/24
+//###############################//
+I2C  0x70  0xFC[31:24]  0x40   RW                                    //Change bank address to 0x40
+I2C  0x70  0x00[17:16]  0x02   RW  RG_SSUSB_XTAL_EXT_EN_PE2H
+I2C  0x70  0x00[13:12]  0x02   RW  RG_SSUSB_XTAL_EXT_EN_PE1H
+I2C  0x70  0xFC[31:24]  0x10   RW                                    //Change bank address to 0x10
+I2C  0x70  0x38[15:15]  0x01   RW  force_pll_sscen
+I2C  0x70  0x38[14:14]  0x01   RW  pll_sscen
+
+I2C  0x70  0xFC[31:24]  0x70   RW                                    //Change bank address to 0x70
+I2C  0x70  0x07[07:03]  0x06   RW
+//Probe
+//I2C  0x70  0xFC[31:24]  0x20   RW                                     //Change bank address to 0x20
+//I2C  0x70  0x28[30:30]  0x01   RW
+I2C  0x70  0xFC[31:24]  0x10   RW                                     //Change bank address to 0x10
+I2C  0x70  0x52[05:00]  0x3D   RW
+
+//###############################//
+//PCI-e 2Lane Patch
+//###############################//
+I2C  0x70  0xFC[31:24]  0x70           RW                              //Change bank address to 0x70
+I2C  0x70  0x08[04:04]  0x01                                           //force ln2 on
+I2C  0x70  0x08[06:06]  0x01                                           //force ln3 on
+I2C  0x70  0xFC[31:24]  0x70   RW                                     //Change bank address to 0x70
+
+//###############################//
+//PCI-e Host P2 Patch: Not gate TX/PCLK clock at P2 , 2021/11/04
+//###############################//
+I2C  0x70  0xFC[31:24]  0x10  RW
+I2C  0x70  0x04[21:16]  0x33  RW
+
+I2C  0x70  0xFC[31:24]  0x10  RW
+I2C  0x70  0x00[31:31]  0x01  RW  // rg_ssusb_p_p3_tx_ng ; PCIe Host mode only, 1'b0: Gate TX clock at P2, 1'b1: Not gate TX clock at P2
+I2C  0x70  0x00[27:27]  0x01  RW  //rg_ssusb_p_p3_pclk_ng; PCIe Host mode only  ,1'b0: Gate PCLK clock at P2 , 1'b1: Not gate PCLK clock at P2
+

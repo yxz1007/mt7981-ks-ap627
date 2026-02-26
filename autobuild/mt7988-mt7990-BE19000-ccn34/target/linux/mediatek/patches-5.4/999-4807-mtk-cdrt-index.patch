@@ -1,0 +1,35 @@
+--- a/drivers/net/ethernet/mediatek/mtk_eth_soc.c 
++++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.c 
+@@ -1376,6 +1376,7 @@
+ 	u32 data = 0;
+ 	u8 tport = 0;
+ 	u8 etype = 0;
++	u8 cdrt_id = 0;
+ 
+ 	if (!info->qid && mac->id)
+ 		info->qid = MTK_QDMA_GMAC2_QID;
+@@ -1405,6 +1406,7 @@
+ 	if (get_tport_etype && skb) {
+ 		u32 result = get_tport_etype(skb);
+ 
++		cdrt_id = (result & 0xFF0000) >> 16;
+ 		tport = (result & 0xFF00) >> 8;
+ 		etype = result & 0x00FF;
+ 	}
+@@ -1434,9 +1436,13 @@
+ 	WRITE_ONCE(desc->txd6, data);
+ 
+ 	WRITE_ONCE(desc->txd7, 0);
+-	if (etype != 0)
+-		WRITE_ONCE(desc->txd8, etype << 8);
+-	else
++	data = 0;
++	if (etype != 0 || cdrt_id != 0) {
++		data |= etype;
++		data = data << 8;
++		data |= cdrt_id;
++		WRITE_ONCE(desc->txd8, data);
++	} else
+ 		WRITE_ONCE(desc->txd8, 0);
+ }
+ 

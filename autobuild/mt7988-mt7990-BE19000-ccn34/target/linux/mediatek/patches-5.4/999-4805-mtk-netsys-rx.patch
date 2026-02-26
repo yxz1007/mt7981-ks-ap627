@@ -1,0 +1,54 @@
+--- a/drivers/net/ethernet/mediatek/mtk_eth_soc.c
++++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.c
+@@ -79,6 +79,8 @@
+ EXPORT_SYMBOL(get_tnl_dev);
+ u32 (*get_tport_etype)(struct sk_buff *skb) = NULL;
+ EXPORT_SYMBOL(get_tport_etype);
++int (*receive_netsys_pkt)(struct sk_buff *skb) = NULL;
++EXPORT_SYMBOL(receive_netsys_pkt);
+ 
+ void mtk_w32(struct mtk_eth *eth, u32 val, unsigned reg)
+ {
+@@ -4112,6 +4114,24 @@
+ 	return err;
+ }
+ 
++#define TOPS_MAGIC_TAG 0x8E94
++
++int mtk_tops_ptype_cb(struct sk_buff *skb, struct net_device *dev,
++		      struct packet_type *pt, struct net_device *unused)
++{
++	int ret = NET_RX_SUCCESS;
++
++	if (receive_netsys_pkt)
++		ret = receive_netsys_pkt(skb);
++
++	return ret;
++}
++
++static struct packet_type mtk_tops_pack_type __read_mostly = {
++	.type   = htons(TOPS_MAGIC_TAG),
++	.func   = mtk_tops_ptype_cb,
++};
++
+ static int mtk_probe(struct platform_device *pdev)
+ {
+ 	struct device_node *mac_np;
+@@ -4384,6 +4404,8 @@
+ 	add_timer(&eth->mtk_dma_monitor_timer);
+ #endif
+ 
++	dev_add_pack(&mtk_tops_pack_type);
++
+ 	return 0;
+ 
+ err_deinit_mdio:
+@@ -4426,6 +4448,8 @@
+ 	unregister_netdevice_notifier(&mtk_eth_netdevice_nb);
+ 	del_timer_sync(&eth->mtk_dma_monitor_timer);
+ 
++	dev_remove_pack(&mtk_tops_pack_type);
++
+ 	return 0;
+ }
+ 

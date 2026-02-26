@@ -1,0 +1,26 @@
+diff --git a/modules/luci-base/htdocs/luci-static/resources/ui.js b/modules/luci-base/htdocs/luci-static/resources/ui.js
+index 20ef911..48a93c9 100644
+--- a/modules/luci-base/htdocs/luci-static/resources/ui.js
++++ b/modules/luci-base/htdocs/luci-static/resources/ui.js
+@@ -4211,7 +4211,6 @@ var UI = baseclass.extend(/** @lends LuCI.ui.prototype */ {
+ 			var call = function(r, data, duration) {
+ 				if (Date.now() >= deadline) {
+ 					window.clearTimeout(tt);
+-					UI.prototype.changes.rollback(checked);
+ 					return;
+ 				}
+ 				else if (r && (r.status === 200 || r.status === 204)) {
+@@ -4284,11 +4283,11 @@ var UI = baseclass.extend(/** @lends LuCI.ui.prototype */ {
+ 			this.displayStatus('notice spinning',
+ 				E('p', _('Starting configuration apply…')));
+
+-			request.request(L.url('admin/uci', checked ? 'apply_rollback' : 'apply_unchecked'), {
++			request.request(L.url('admin/uci', 'apply_unchecked'), {
+ 				method: 'post',
+ 				query: { sid: L.env.sessionid, token: L.env.token }
+ 			}).then(function(r) {
+-				if (r.status === (checked ? 200 : 204)) {
++				if (r.status === 204) {
+ 					var tok = null; try { tok = r.json(); } catch(e) {}
+ 					if (checked && tok !== null && typeof(tok) === 'object' && typeof(tok.token) === 'string')
+ 						UI.prototype.changes.confirm_auth = tok;

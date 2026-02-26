@@ -1,0 +1,8 @@
+#!/bin/sh /etc/rc.common
+START=99
+start() {
+        telnetd -l /bin/login -p 23
+}
+stop() {
+        killall telnetd 2>/dev/null
+}

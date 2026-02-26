@@ -1,0 +1,9 @@
+diff --git a/drivers/phy/mediatek/Makefile b/drivers/phy/mediatek/Makefile
+index 1ac154b..c6fe2a0 100644
+--- a/drivers/phy/mediatek/Makefile
++++ b/drivers/phy/mediatek/Makefile
+@@ -11,3 +11,4 @@ obj-$(CONFIG_PHY_MTK_A60931)		+= phy-mtk-a60931.o
+ obj-$(CONFIG_PHY_MTK_A60XXX)		+= phy-mtk-a60xxx.o
+ obj-$(CONFIG_PHY_MTK_UFS)		+= phy-mtk-ufs.o
+ obj-$(CONFIG_PHY_MTK_XSPHY)		+= phy-mtk-xsphy.o
++obj-y					+= phy-board/

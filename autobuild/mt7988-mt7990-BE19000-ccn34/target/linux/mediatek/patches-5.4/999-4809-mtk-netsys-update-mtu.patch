@@ -1,0 +1,21 @@
+--- a/drivers/net/ethernet/mediatek/mtk_eth_soc.c
++++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.c
+@@ -4922,6 +4922,7 @@ static int mtk_add_mac(struct mtk_eth *e
+ 
+ 	eth->netdev[id]->irq = eth->irq_fe[0];
+ 	eth->netdev[id]->dev.of_node = np;
++	eth->netdev[id]->max_mtu = MTK_MAX_RX_LENGTH - MTK_RX_ETH_HLEN;
+ 
+ 	return 0;
+ 
+--- a/drivers/net/ethernet/mediatek/mtk_eth_soc.h
++++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.h
+@@ -17,7 +17,7 @@
+ #include <linux/phylink.h>
+ 
+ #define MTK_QDMA_PAGE_SIZE	2048
+-#define	MTK_MAX_RX_LENGTH	1536
++#define	MTK_MAX_RX_LENGTH	2048
+ #define MTK_MIN_TX_LENGTH	60
+ #define MTK_DMA_SIZE		2048
+ #define MTK_NAPI_WEIGHT		256

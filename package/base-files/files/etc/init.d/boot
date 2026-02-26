@@ -39,6 +39,8 @@ boot() {
 	grep -q pstore /proc/filesystems && /bin/mount -o noatime -t pstore pstore /sys/fs/pstore
 	[ "$FAILSAFE" = "true" ] && touch /tmp/.failsafe
 
+	[ -f /etc/hotplug.d/firmware/12-mtk-wifi-testmode ] && sh /etc/hotplug.d/firmware/12-mtk-wifi-testmode
+
 	/sbin/kmodloader
 
 	[ ! -f /etc/config/wireless ] && {

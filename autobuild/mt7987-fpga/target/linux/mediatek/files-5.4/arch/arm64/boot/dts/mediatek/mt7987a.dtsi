@@ -1,0 +1,165 @@
+// SPDX-License-Identifier: (GPL-2.0 OR MIT)
+/*
+ * Copyright (C) 2023 MediaTek Inc.
+ * Author: Sam.Shih <sam.shih@mediatek.com>
+ */
+
+/dts-v1/;
+#include "mt7987.dtsi"
+#include "mt7987-pinctrl.dtsi"
+#include "mt7987-netsys.dtsi"
+
+/ {
+	compatible = "mediatek,mt7987a", "mediatek,mt7987";
+};
+
+&afe {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pcm_pins>;
+	status = "okay";
+};
+
+&boottrap {
+	status = "okay";
+};
+
+
+/* Use MT7988 setting before MT7987 early-porting */
+&cpu0 {
+	compatible = "arm,cortex-a73";
+};
+
+/* Use MT7988 setting before MT7987 early-porting */
+&cpu1 {
+	compatible = "arm,cortex-a73";
+};
+
+/* Use MT7988 setting before MT7987 early-porting */
+&cpu2 {
+	compatible = "arm,cortex-a73";
+};
+
+/* Use MT7988 setting before MT7987 early-porting */
+&cpu3 {
+	compatible = "arm,cortex-a73";
+};
+
+&crypto {
+	status = "okay";
+};
+
+&eth {
+	status = "okay";
+};
+
+&fan {
+	pwms = <&pwm 0 50000 0>;
+	status = "okay";
+};
+
+&hnat {
+	status = "okay";
+};
+
+&i2c0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&i2c0_pins>;
+	status = "okay";
+};
+
+&i2c1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&i2c1_pins>;
+	status = "okay";
+};
+
+&infra_bus_prot {
+	status = "okay";
+};
+
+&lvts {
+	status = "okay";
+};
+
+&pcie0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pcie0_pins>;
+	status = "okay";
+};
+
+&pcie1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pcie1_pins>;
+	status = "okay";
+};
+
+&pcie2 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pcie2_pins>;
+	status = "disabled";
+};
+
+&pcie3 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pcie3_pins>;
+	status = "okay";
+};
+
+&phyfw {
+	status = "okay";
+};
+
+/* Use MT7988 setting before MT7987 early-porting */
+&pmu {
+	compatible = "arm,cortex-a73-pmu";
+	interrupt-parent = <&gic>;
+	interrupts = <GIC_PPI 7 IRQ_TYPE_LEVEL_LOW>;
+};
+
+&pwm {
+	status = "okay";
+};
+
+&spi1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&spic_pins>;
+	status = "okay";
+};
+
+&switch0 {
+	status = "okay";
+};
+
+&trng {
+	status = "okay";
+};
+
+&uart0 {
+	status = "okay";
+};
+
+&uart1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart1_pins>;
+	status = "okay";
+};
+
+&usbtphy {
+	status = "okay";
+};
+
+&usbxphy {
+	status = "okay";
+};
+
+&watchdog {
+	status = "okay";
+};
+
+&xhci0 {
+	status = "okay";
+};
+
+&xhci1 {
+	status = "okay";
+};

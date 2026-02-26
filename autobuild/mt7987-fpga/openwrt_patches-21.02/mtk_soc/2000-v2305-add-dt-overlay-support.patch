@@ -1,0 +1,463 @@
+From b9d508006bd4171563e3cae5ef5d4a71634277b6 Mon Sep 17 00:00:00 2001
+From: Sam Shih <sam.shih@mediatek.com>
+Date: Tue, 26 Dec 2023 20:11:33 +0800
+Subject: [PATCH] backport-dt-overlay-support-from-openwrt-23.05
+
+Change-Id: I651a16ac5b62a96045b124654ced0b2f767c98ab
+---
+ include/image-commands.mk  |  19 ++++-
+ include/image.mk           |  42 +++++++++--
+ scripts/mkits.sh           | 150 +++++++++++++++++++++++++++++++++----
+ scripts/target-metadata.pl |   1 +
+ 4 files changed, 190 insertions(+), 22 deletions(-)
+
+Index: lede/include/image-commands.mk
+===================================================================
+--- lede.orig/include/image-commands.mk
++++ lede/include/image-commands.mk
+@@ -199,13 +199,24 @@ endef
+ define Build/fit
+ 	$(TOPDIR)/scripts/mkits.sh \
+ 		-D $(DEVICE_NAME) -o $@.its -k $@ \
+-		$(if $(word 2,$(1)),-d $(word 2,$(1))) -C $(word 1,$(1)) \
++		-C $(word 1,$(1)) \
++		$(if $(word 2,$(1)),\
++			$(if $(findstring 11,$(if $(DEVICE_DTS_OVERLAY),1)$(if $(findstring $(KERNEL_BUILD_DIR)/image-,$(word 2,$(1))),,1)), \
++				-d $(KERNEL_BUILD_DIR)/image-$$(basename $(word 2,$(1))), \
++				-d $(word 2,$(1)))) \
++		$(if $(findstring with-rootfs,$(word 3,$(1))),-r $(IMAGE_ROOTFS)) \
++		$(if $(findstring with-initrd,$(word 3,$(1))), \
++			$(if $(CONFIG_TARGET_ROOTFS_INITRAMFS_SEPARATE), \
++				-i $(KERNEL_BUILD_DIR)/initrd.cpio$(strip $(call Build/initrd_compression)))) \
+ 		-a $(KERNEL_LOADADDR) -e $(if $(KERNEL_ENTRY),$(KERNEL_ENTRY),$(KERNEL_LOADADDR)) \
+ 		$(if $(DEVICE_FDT_NUM),-n $(DEVICE_FDT_NUM)) \
++		$(if $(DEVICE_DTS_DELIMITER),-l $(DEVICE_DTS_DELIMITER)) \
++		$(if $(DEVICE_DTS_LOADADDR),-s $(DEVICE_DTS_LOADADDR)) \
++		$(if $(DEVICE_DTS_OVERLAY),$(foreach dtso,$(DEVICE_DTS_OVERLAY), -O $(dtso):$(KERNEL_BUILD_DIR)/image-$(dtso).dtbo)) \
+ 		-c $(if $(DEVICE_DTS_CONFIG),$(DEVICE_DTS_CONFIG),"config-1") \
+-		-A $(LINUX_KARCH) -v $(LINUX_VERSION) \
+-		$(if $(CONFIG_TARGET_ROOTFS_SQUASHFS),-R $(ROOTFS/squashfs/$(DEVICE_NAME)))
+-	PATH=$(LINUX_DIR)/scripts/dtc:$(PATH) mkimage -f $@.its $@.new
++		-A $(LINUX_KARCH) -v $(LINUX_VERSION)
++	PATH=$(LINUX_DIR)/scripts/dtc:$(PATH) mkimage $(if $(findstring external,$(word 3,$(1))),\
++		-E -B 0x1000 $(if $(findstring static,$(word 3,$(1))),-p 0x1000)) -f $@.its $@.new
+ 	@mv $@.new $@
+ endef
+ 
+Index: lede/include/image.mk
+===================================================================
+--- lede.orig/include/image.mk
++++ lede/include/image.mk
+@@ -153,7 +153,7 @@ endif
+ 
+ 
+ # Disable noisy checks by default as in upstream
+-DTC_FLAGS += \
++DTC_WARN_FLAGS := \
+   -Wno-unit_address_vs_reg \
+   -Wno-simple_bus_reg \
+   -Wno-unit_address_format \
+@@ -166,6 +166,9 @@ DTC_FLAGS += \
+   -Wno-graph_port \
+   -Wno-unique_unit_address
+ 
++DTC_FLAGS += $(DTC_WARN_FLAGS)
++DTCO_FLAGS += $(DTC_WARN_FLAGS)
++
+ define Image/pad-to
+ 	dd if=$(1) of=$(1).new bs=$(2) conv=sync
+ 	mv $(1).new $(1)
+@@ -181,7 +184,7 @@ endef
+ # $(2) target dtb file
+ # $(3) extra CPP flags
+ # $(4) extra DTC flags
+-define Image/BuildDTB
++define Image/BuildDTB/sub
+ 	$(TARGET_CROSS)cpp -nostdinc -x assembler-with-cpp \
+ 		-I$(DTS_DIR) \
+ 		-I$(DTS_DIR)/include \
+@@ -189,11 +192,20 @@ define Image/BuildDTB
+ 		-undef -D__DTS__ $(3) \
+ 		-o $(2).tmp $(1)
+ 	$(LINUX_DIR)/scripts/dtc/dtc -O dtb \
+-		-i$(dir $(1)) $(DTC_FLAGS) $(4) \
++		-i$(dir $(1)) $(4) \
++	$(if $(CONFIG_HAS_DT_OVERLAY_SUPPORT),-@) \
+ 		-o $(2) $(2).tmp
+ 	$(RM) $(2).tmp
+ endef
+ 
++define Image/BuildDTB
++	$(call Image/BuildDTB/sub,$(1),$(2),$(3),$(DTC_FLAGS) $(DEVICE_DTC_FLAGS) $(4))
++endef
++
++define Image/BuildDTBO
++	$(call Image/BuildDTB/sub,$(1),$(2),$(3),$(DTCO_FLAGS) $(DEVICE_DTCO_FLAGS) $(4))
++endef
++
+ define Image/mkfs/jffs2/sub-raw
+ 	$(STAGING_DIR_HOST)/bin/mkfs.jffs2 \
+ 		$(2) \
+@@ -393,7 +405,10 @@ define Device/Init
+   DEVICE_DTS :=
+   DEVICE_DTS_CONFIG :=
+   DEVICE_DTS_DIR :=
++  DEVICE_DTS_OVERLAY :=
+   DEVICE_FDT_NUM :=
++  DEVICE_DTC_FLAGS :=
++  DEVICE_DTCO_FLAGS :=
+   SOC :=
+ 
+   BOARD_NAME :=
+@@ -416,8 +431,8 @@ DEFAULT_DEVICE_VARS := \
+   DEVICE_NAME KERNEL KERNEL_INITRAMFS KERNEL_INITRAMFS_IMAGE KERNEL_SIZE \
+   CMDLINE UBOOTENV_IN_UBI KERNEL_IN_UBI BLOCKSIZE PAGESIZE SUBPAGESIZE \
+   VID_HDR_OFFSET UBINIZE_OPTS UBINIZE_PARTS MKUBIFS_OPTS DEVICE_DTS \
+-  DEVICE_DTS_CONFIG DEVICE_DTS_DIR DEVICE_FDT_NUM SOC BOARD_NAME \
+-  UIMAGE_MAGIC UIMAGE_NAME \
++  DEVICE_DTS_CONFIG DEVICE_DTS_DIR DEVICE_DTS_OVERLAY DEVICE_FDT_NUM \
++  SOC BOARD_NAME UIMAGE_MAGIC UIMAGE_NAME \
+   SUPPORTED_DEVICES IMAGE_METADATA KERNEL_ENTRY KERNEL_LOADADDR \
+   IMAGE_PREFIX DEVICE_PACKAGES UBOOT_PATH IMAGE_SIZE \
+   DEVICE_COMPAT_VERSION DEVICE_COMPAT_MESSAGE \
+@@ -536,6 +551,17 @@ define Device/Build/dtb
+   endif
+ 
+ endef
++
++define Device/Build/dtbo
++  ifndef BUILD_DTSO_$(1)
++  BUILD_DTSO_$(1) := 1
++  $(KDIR)/image-$(1).dtbo: FORCE
++	$(call Image/BuildDTBO,$(strip $(2))/$(strip $(3)).dtso,$$@)
++
++  image_prepare: $(KDIR)/image-$(1).dtbo
++  endif
++
++endef
+ endif
+ 
+ define Device/Build/kernel
+@@ -545,6 +571,12 @@ define Device/Build/kernel
+ 		$$(dts) \
+ 	) \
+   ))
++  $$(eval $$(foreach dtso,$$(DEVICE_DTS_OVERLAY), \
++	$$(call Device/Build/dtbo,$$(notdir $$(dtso)), \
++		$$(if $$(DEVICE_DTS_DIR),$$(DEVICE_DTS_DIR),$$(DTS_DIR)), \
++		$$(dtso) \
++	) \
++  ))
+ 
+   $(KDIR)/$$(KERNEL_NAME):: image_prepare
+   $$(_TARGET): $$(if $$(KERNEL_INSTALL),$(BIN_DIR)/$$(KERNEL_IMAGE))
+Index: lede/scripts/mkits.sh
+===================================================================
+--- lede.orig/scripts/mkits.sh
++++ lede/scripts/mkits.sh
+@@ -17,29 +17,39 @@
+ usage() {
+ 	printf "Usage: %s -A arch -C comp -a addr -e entry" "$(basename "$0")"
+ 	printf " -v version -k kernel [-D name -n address -d dtb] -o its_file"
+-	printf " [-s script] [-S key_name_hint] [-r ar_ver] [-R rootfs]"
+ 
+ 	printf "\n\t-A ==> set architecture to 'arch'"
+ 	printf "\n\t-C ==> set compression type 'comp'"
+ 	printf "\n\t-c ==> set config name 'config'"
+ 	printf "\n\t-a ==> set load address to 'addr' (hex)"
+ 	printf "\n\t-e ==> set entry point to 'entry' (hex)"
++	printf "\n\t-f ==> set device tree compatible string"
++	printf "\n\t-i ==> include initrd Blob 'initrd'"
+ 	printf "\n\t-v ==> set kernel version to 'version'"
+ 	printf "\n\t-k ==> include kernel image 'kernel'"
+ 	printf "\n\t-D ==> human friendly Device Tree Blob 'name'"
+ 	printf "\n\t-n ==> fdt unit-address 'address'"
+ 	printf "\n\t-d ==> include Device Tree Blob 'dtb'"
++	printf "\n\t-r ==> include RootFS blob 'rootfs'"
++	printf "\n\t-H ==> specify hash algo instead of SHA1"
++	printf "\n\t-l ==> legacy mode character (@ etc otherwise -)"
+ 	printf "\n\t-o ==> create output file 'its_file'"
+-	printf "\n\t-s ==> include u-boot script 'script'"
+-	printf "\n\t-S ==> add signature at configurations and assign its key_name_hint by 'key_name_hint'"
+-	printf "\n\t-r ==> set anti-rollback version to 'fw_ar_ver' (dec)"
+-	printf "\n\t-R ==> specify rootfs file for embedding hash\n"
++	printf "\n\t-O ==> create config with dt overlay 'name:dtb'"
++	printf "\n\t-s ==> set FDT load address to 'addr' (hex)"
++	printf "\n\t\t(can be specified more than once)\n"
+ 	exit 1
+ }
+ 
++REFERENCE_CHAR='-'
+ FDTNUM=1
++ROOTFSNUM=1
++INITRDNUM=1
++HASH=sha1
++LOADABLES=
++DTOVERLAY=
++DTADDR=
+ 
+-while getopts ":A:a:c:C:D:d:e:k:n:o:v:s:S:r:R:" OPTION
++while getopts ":A:a:c:C:D:d:e:f:i:k:l:n:o:O:v:r:s:H:" OPTION
+ do
+ 	case $OPTION in
+ 		A ) ARCH=$OPTARG;;
+@@ -49,14 +59,17 @@ do
+ 		D ) DEVICE=$OPTARG;;
+ 		d ) DTB=$OPTARG;;
+ 		e ) ENTRY_ADDR=$OPTARG;;
++		f ) COMPATIBLE=$OPTARG;;
++		i ) INITRD=$OPTARG;;
+ 		k ) KERNEL=$OPTARG;;
++		l ) REFERENCE_CHAR=$OPTARG;;
+ 		n ) FDTNUM=$OPTARG;;
+ 		o ) OUTPUT=$OPTARG;;
++		O ) DTOVERLAY="$DTOVERLAY ${OPTARG}";;
++		r ) ROOTFS=$OPTARG;;
++		s ) FDTADDR=$OPTARG;;
++		H ) HASH=$OPTARG;;
+ 		v ) VERSION=$OPTARG;;
+-		s ) UBOOT_SCRIPT=$OPTARG;;
+-		S ) KEY_NAME_HINT=$OPTARG;;
+-		r ) AR_VER=$OPTARG;;
+-		R ) ROOTFS_FILE=$OPTARG;;
+ 		* ) echo "Invalid option passed to '$0' (options:$*)"
+ 		usage;;
+ 	esac
+@@ -71,99 +84,120 @@ fi
+ 
+ ARCH_UPPER=$(echo "$ARCH" | tr '[:lower:]' '[:upper:]')
+ 
++if [ -n "${COMPATIBLE}" ]; then
++	COMPATIBLE_PROP="compatible = \"${COMPATIBLE}\";"
++fi
++
++[ "$DTOVERLAY" ] && {
++	dtbsize=$(wc -c "$DTB" | awk '{print $1}')
++	DTADDR=$(printf "0x%08x" $(($LOAD_ADDR - $dtbsize)) )
++}
++
++[ "$FDTADDR" ] && {
++	DTADDR="$FDTADDR"
++}
++
+ # Conditionally create fdt information
+ if [ -n "${DTB}" ]; then
+ 	FDT_NODE="
+-		fdt-$FDTNUM {
++		fdt${REFERENCE_CHAR}$FDTNUM {
+ 			description = \"${ARCH_UPPER} OpenWrt ${DEVICE} device tree blob\";
++			${COMPATIBLE_PROP}
+ 			data = /incbin/(\"${DTB}\");
+ 			type = \"flat_dt\";
++			${DTADDR:+load = <${DTADDR}>;}
+ 			arch = \"${ARCH}\";
+ 			compression = \"none\";
+ 			hash-1 {
+ 				algo = \"crc32\";
+ 			};
+ 			hash-2 {
+-				algo = \"sha1\";
++				algo = \"${HASH}\";
+ 			};
+ 		};
+ "
+-	FDT_PROP="fdt = \"fdt-$FDTNUM\";"
++	FDT_PROP="fdt = \"fdt${REFERENCE_CHAR}$FDTNUM\";"
+ fi
+ 
+-# Conditionally create rootfs hash information
+-if [ -f "${ROOTFS_FILE}" ]; then
+-	ROOTFS_SIZE=$(stat -c %s ${ROOTFS_FILE})
+-
+-	ROOTFS_SHA1=$(sha1sum ${ROOTFS_FILE} | awk '{print "<0x"substr($0,1,8) " 0x"substr($0,9,8) " 0x"substr($0,17,8) " 0x"substr($0,25,8) " 0x"substr($0,33,8) ">"}')
+-	ROOTFS_CRC32=$(crc32sum ${ROOTFS_FILE})
+-
+-	ROOTFS="
+-	rootfs {
+-		size = <${ROOTFS_SIZE}>;
+-
+-		hash-1 {
+-			value = <0x${ROOTFS_CRC32}>;
+-			algo = \"crc32\";
+-		};
+-
+-		hash-2 {
+-			value = ${ROOTFS_SHA1};
+-			algo = \"sha1\";
++if [ -n "${INITRD}" ]; then
++	INITRD_NODE="
++		initrd${REFERENCE_CHAR}$INITRDNUM {
++			description = \"${ARCH_UPPER} OpenWrt ${DEVICE} initrd\";
++			${COMPATIBLE_PROP}
++			data = /incbin/(\"${INITRD}\");
++			type = \"ramdisk\";
++			arch = \"${ARCH}\";
++			os = \"linux\";
++			hash-1 {
++				algo = \"crc32\";
++			};
++			hash-2 {
++				algo = \"${HASH}\";
++			};
+ 		};
+-	};
+ "
++	INITRD_PROP="ramdisk=\"initrd${REFERENCE_CHAR}${INITRDNUM}\";"
+ fi
+ 
+-# Conditionally create script information
+-if [ -n "${UBOOT_SCRIPT}" ]; then
+-	SCRIPT="\
+-		script-1 {
+-			description = \"U-Boot Script\";
+-			data = /incbin/(\"${UBOOT_SCRIPT}\");
+-			type = \"script\";
++
++if [ -n "${ROOTFS}" ]; then
++	dd if="${ROOTFS}" of="${ROOTFS}.pagesync" bs=4096 conv=sync
++	ROOTFS_NODE="
++		rootfs${REFERENCE_CHAR}$ROOTFSNUM {
++			description = \"${ARCH_UPPER} OpenWrt ${DEVICE} rootfs\";
++			${COMPATIBLE_PROP}
++			data = /incbin/(\"${ROOTFS}.pagesync\");
++			type = \"filesystem\";
+ 			arch = \"${ARCH}\";
+-			os = \"linux\";
+-			load = <0>;
+-			entry = <0>;
+ 			compression = \"none\";
+ 			hash-1 {
+ 				algo = \"crc32\";
+ 			};
+ 			hash-2 {
+-				algo = \"sha1\";
++				algo = \"${HASH}\";
+ 			};
+-		};\
+-"
+-	LOADABLES="\
+-			loadables = \"script-1\";\
+-"
+-	SIGN_IMAGES="\
+-				sign-images = \"fdt\", \"kernel\", \"loadables\";\
+-"
+-else
+-	SIGN_IMAGES="\
+-				sign-images = \"fdt\", \"kernel\";\
++		};
+ "
++	LOADABLES="${LOADABLES:+$LOADABLES, }\"rootfs${REFERENCE_CHAR}${ROOTFSNUM}\""
+ fi
+ 
+-# Conditionally create signature information
+-if [ -n "${KEY_NAME_HINT}" ]; then
+-	SIGNATURE="\
+-			signature {
+-				algo = \"sha1,rsa2048\";
+-				key-name-hint = \"${KEY_NAME_HINT}\";
+-${SIGN_IMAGES}
+-			};\
++# add DT overlay blobs
++FDTOVERLAY_NODE=""
++OVCONFIGS=""
++[ "$DTOVERLAY" ] && for overlay in $DTOVERLAY ; do
++	overlay_blob=${overlay##*:}
++	ovname=${overlay%%:*}
++	ovnode="fdt-$ovname"
++	ovsize=$(wc -c "$overlay_blob" | awk '{print $1}')
++	echo "$ovname ($overlay_blob) : $ovsize" >&2
++	DTADDR=$(printf "0x%08x" $(($DTADDR - $ovsize)))
++	FDTOVERLAY_NODE="$FDTOVERLAY_NODE
++
++		$ovnode {
++			description = \"${ARCH_UPPER} OpenWrt ${DEVICE} device tree overlay $ovname\";
++			${COMPATIBLE_PROP}
++			data = /incbin/(\"${overlay_blob}\");
++			type = \"flat_dt\";
++			arch = \"${ARCH}\";
++			load = <${DTADDR}>;
++			compression = \"none\";
++			hash-1 {
++				algo = \"crc32\";
++			};
++			hash-2 {
++				algo = \"${HASH}\";
++			};
++		};
+ "
+-fi
++	OVCONFIGS="$OVCONFIGS
+ 
+-# Conditionally create anti-rollback version information
+-if [ -n "${AR_VER}" ]; then
+-	FW_AR_VER="\
+-			fw_ar_ver = <${AR_VER}>;\
+-"
+-fi
++		$ovname {
++			description = \"OpenWrt ${DEVICE} overlay $ovname\";
++			fdt = \"$ovnode\";
++			${COMPATIBLE_PROP}
++		};
++	"
++done
+ 
+ # Create a default, fully populated DTS file
+ DATA="/dts-v1/;
+@@ -173,7 +207,7 @@ DATA="/dts-v1/;
+ 	#address-cells = <1>;
+ 
+ 	images {
+-		kernel-1 {
++		kernel${REFERENCE_CHAR}1 {
+ 			description = \"${ARCH_UPPER} OpenWrt Linux-${VERSION}\";
+ 			data = /incbin/(\"${KERNEL}\");
+ 			type = \"kernel\";
+@@ -186,25 +220,26 @@ DATA="/dts-v1/;
+ 				algo = \"crc32\";
+ 			};
+ 			hash-2 {
+-				algo = \"sha1\";
++				algo = \"$HASH\";
+ 			};
+ 		};
++${INITRD_NODE}
+ ${FDT_NODE}
+-${SCRIPT}
++${FDTOVERLAY_NODE}
++${ROOTFS_NODE}
+ 	};
+ 
+-${ROOTFS}
+-
+ 	configurations {
+ 		default = \"${CONFIG}\";
+ 		${CONFIG} {
+-			description = \"OpenWrt\";
+-${FW_AR_VER}
+-${LOADABLES}
+-			kernel = \"kernel-1\";
++			description = \"OpenWrt ${DEVICE}\";
++			kernel = \"kernel${REFERENCE_CHAR}1\";
+ 			${FDT_PROP}
+-${SIGNATURE}
++			${LOADABLES:+loadables = ${LOADABLES};}
++			${COMPATIBLE_PROP}
++			${INITRD_PROP}
+ 		};
++		${OVCONFIGS}
+ 	};
+ };"
+ 
+Index: lede/scripts/target-metadata.pl
+===================================================================
+--- lede.orig/scripts/target-metadata.pl
++++ lede/scripts/target-metadata.pl
+@@ -44,6 +44,7 @@ sub target_config_features(@) {
+ 		/^rootfs-part$/ and $ret .= "\tselect USES_ROOTFS_PART\n";
+ 		/^boot-part$/ and $ret .= "\tselect USES_BOOT_PART\n";
+ 		/^testing-kernel$/ and $ret .= "\tselect HAS_TESTING_KERNEL\n";
++		/^dt-overlay$/ and $ret .= "\tselect HAS_DT_OVERLAY_SUPPORT\n";
+ 	}
+ 	return $ret;
+ }

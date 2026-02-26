@@ -1,0 +1,122 @@
+From fd7aedc1eb2b5358798321a4132b681c3f42138f Mon Sep 17 00:00:00 2001
+From: Lian Chen <lian.chen@mediatek.com>
+Date: Wed, 17 May 2023 15:11:44 +0800
+Subject: [PATCH] hostapd wpad add eht320 support
+
+---
+ wpa_supplicant/config.c         |  2 +-
+ wpa_supplicant/mesh.c           |  6 +++++
+ wpa_supplicant/wpa_supplicant.c | 39 ++++++++++++++++++++++++++++++++-
+ 3 files changed, 45 insertions(+), 2 deletions(-)
+
+diff --git a/wpa_supplicant/config.c b/wpa_supplicant/config.c
+index 1801716..bebcf79 100644
+--- a/wpa_supplicant/config.c
++++ b/wpa_supplicant/config.c
+@@ -2595,7 +2595,7 @@ static const struct parse_data ssid_fields[] = {
+ 	{ INT_RANGE(vht, 0, 1) },
+ 	{ INT_RANGE(ht40, -1, 1) },
+ 	{ INT_RANGE(max_oper_chwidth, CONF_OPER_CHWIDTH_USE_HT,
+-		    CONF_OPER_CHWIDTH_80P80MHZ) },
++		    CONF_OPER_CHWIDTH_320MHZ) },
+ 	{ INT(vht_center_freq1) },
+ 	{ INT(vht_center_freq2) },
+ #ifdef IEEE8021X_EAPOL
+diff --git a/wpa_supplicant/mesh.c b/wpa_supplicant/mesh.c
+index c0dd6d0..35ecd62 100644
+--- a/wpa_supplicant/mesh.c
++++ b/wpa_supplicant/mesh.c
+@@ -464,6 +464,9 @@ static int wpa_supplicant_mesh_init(struct wpa_supplicant *wpa_s,
+ 		case 160:
+ 			conf->op_class = 134;
+ 			break;
++		case 320:
++			conf->op_class = 137;
++			break;
+ 		default:
+ 			conf->op_class = 131;
+ 			break;
+@@ -659,6 +662,9 @@ int wpa_supplicant_join_mesh(struct wpa_supplicant *wpa_s,
+ 		case 160:
+ 			ssid->max_oper_chwidth = CONF_OPER_CHWIDTH_160MHZ;
+ 			break;
++		case 320:
++			ssid->max_oper_chwidth = CONF_OPER_CHWIDTH_320MHZ;
++			break;
+ 		default:
+ 			ssid->max_oper_chwidth = CONF_OPER_CHWIDTH_USE_HT;
+ 			break;
+diff --git a/wpa_supplicant/wpa_supplicant.c b/wpa_supplicant/wpa_supplicant.c
+index bec8db8..400529a 100644
+--- a/wpa_supplicant/wpa_supplicant.c
++++ b/wpa_supplicant/wpa_supplicant.c
+@@ -2933,6 +2933,26 @@ static void ibss_mesh_select_40mhz(struct wpa_supplicant *wpa_s,
+ }
+ 
+ 
++static int ibss_get_center_320mhz(int channel)
++{
++	int seg0;
++
++	if (channel >= 1 && channel <= 45)
++		seg0 = 31;
++	else if (channel >= 49 && channel <= 77)
++		seg0 = 63;
++	else if (channel >= 81 && channel <= 109)
++		seg0 = 95;
++	else if (channel >= 113 && channel <= 141)
++		seg0 = 127;
++	else if (channel >= 145 && channel <= 173)
++		seg0 = 159;
++	else
++		seg0 = 191;
++
++	return seg0;
++}
++
+ static bool ibss_mesh_select_80_160mhz(struct wpa_supplicant *wpa_s,
+ 				       const struct wpa_ssid *ssid,
+ 				       struct hostapd_hw_modes *mode,
+@@ -2946,6 +2966,8 @@ static bool ibss_mesh_select_80_160mhz(struct wpa_supplicant *wpa_s,
+ 	static const int bw160[] = {
+ 		5955, 6115, 6275, 6435, 6595, 6755, 6915
+ 	};
++	static const int bw320[] = { 5955, 6255, 6115, 6415, 6275, 6575,
++		6435, 6735, 6595, 6895, 6755, 7055};
+ 	struct hostapd_freq_params vht_freq;
+ 	int i;
+ 	unsigned int j, k;
+@@ -2993,7 +3015,8 @@ static bool ibss_mesh_select_80_160mhz(struct wpa_supplicant *wpa_s,
+ 	 * above. If 160 MHz is supported, check the remaining four 20 MHz
+ 	 * channels for the total of 160 MHz bandwidth for 6 GHz.
+ 	 */
+-	if ((mode->he_capab[ieee80211_mode].phy_cap[
++	if ((ssid->max_oper_chwidth == CONF_OPER_CHWIDTH_160MHZ) &&
++	   (mode->he_capab[ieee80211_mode].phy_cap[
+ 		     HE_PHYCAP_CHANNEL_WIDTH_SET_IDX] &
+ 	     HE_PHYCAP_CHANNEL_WIDTH_SET_160MHZ_IN_5G) && is_6ghz &&
+ 	    ibss_mesh_is_80mhz_avail(channel + 16, mode, dfs_enabled)) {
+@@ -3006,6 +3029,20 @@ static bool ibss_mesh_select_80_160mhz(struct wpa_supplicant *wpa_s,
+ 		}
+ 	}
+ 
++	if ((ssid->max_oper_chwidth == CONF_OPER_CHWIDTH_320MHZ) &&
++	     (mode->eht_capab[ieee80211_mode].phy_cap[EHT_PHYCAP_320MHZ_IN_6GHZ_SUPPORT_IDX] &
++	     EHT_PHYCAP_320MHZ_IN_6GHZ_SUPPORT_MASK) && is_6ghz) {
++
++		for (i = 0; i < ARRAY_SIZE(bw320); i+=2) {
++			if (freq->freq >= bw320[i] &&
++			    freq->freq <= bw320[i+1])
++				break;
++		}
++
++		seg0 = ibss_get_center_320mhz(freq->channel);
++		chwidth = CONF_OPER_CHWIDTH_320MHZ;
++	}
++
+ 	if (ssid->max_oper_chwidth == CONF_OPER_CHWIDTH_80P80MHZ) {
+ 		/* setup center_freq2, bandwidth */
+ 		for (k = 0; k < ARRAY_SIZE(bw80); k++) {
+-- 
+2.18.0
+

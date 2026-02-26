@@ -1,0 +1,1 @@
+obj-y += mtk_main.o mtk_gpio_i2c.o mtk_pcie_gen3.o mtk_phy_a60931.o

@@ -1,0 +1,53 @@
+From f096c454c504385a2a13748fd72136a6a3c78c98 Mon Sep 17 00:00:00 2001
+From: Zhanyong Wang <zhanyong.wang@mediatek.com>
+Date: Mon, 22 Mar 2021 13:55:09 +0800
+Subject: [PATCH 2/2] [PATCH 2/2] xhci: add Mediatek FPGA tphy daughter card
+ support
+
+intergrate FPGA A60931 daughter card driver for panther project
+
+CR-Id: WCNCR00218094
+Signed-off-by: Zhanyong Wang <zhanyong.wang@mediatek.com>
+---
+ drivers/usb/host/xhci-mtk.c | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/drivers/usb/host/xhci-mtk.c b/drivers/usb/host/xhci-mtk.c
+index 09b67219fd14..adb09d81078d 100644
+--- a/drivers/usb/host/xhci-mtk.c
++++ b/drivers/usb/host/xhci-mtk.c
+@@ -14,6 +14,7 @@
+ #include <linux/mfd/syscon.h>
+ #include <linux/module.h>
+ #include <linux/of.h>
++#include <linux/of_address.h>
+ #include <linux/platform_device.h>
+ #include <linux/pm_runtime.h>
+ #include <linux/regmap.h>
+@@ -517,6 +518,15 @@ static int xhci_mtk_probe(struct platform_device *pdev)
+ 	hcd->rsrc_start = res->start;
+ 	hcd->rsrc_len = resource_size(res);
+ 
++#ifdef CONFIG_PHY_MTK_USB3_I2C_FPGA
++	mtk->has_ippc = false;
++	mtk->ippc_regs = of_iomap(node, 1);
++	if (IS_ERR(mtk->ippc_regs)) {
++		ret = PTR_ERR(mtk->ippc_regs);
++		goto put_usb2_hcd;
++	}
++	mtk->has_ippc = true;
++#else
+ 	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "ippc");
+ 	if (res) {	/* ippc register is optional */
+ 		mtk->ippc_regs = devm_ioremap_resource(dev, res);
+@@ -528,6 +538,7 @@ static int xhci_mtk_probe(struct platform_device *pdev)
+ 	} else {
+ 		mtk->has_ippc = false;
+ 	}
++#endif
+ 
+ 	device_init_wakeup(dev, true);
+ 
+-- 
+2.18.0
+

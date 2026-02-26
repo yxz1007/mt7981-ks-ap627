@@ -1,0 +1,12 @@
+diff --git a/feeds/feed_prpl/network/libs/libfwinterface/Makefile b/feeds/feed_prpl/network/libs/libfwinterface/Makefile
+index 11016b3..5a3d792 100644
+--- a/feeds/feed_prpl/network/libs/libfwinterface/Makefile
++++ b/feeds/feed_prpl/network/libs/libfwinterface/Makefile
+@@ -24,7 +24,6 @@ define Package/$(PKG_NAME)
+   DEPENDS += +libamxc
+   DEPENDS += +libsahtrace
+   DEPENDS += +libfwrules
+-  DEPENDS += +libiptc
+   DEPENDS += +iptables
+   DEPENDS += +kmod-ifb
+   DEPENDS += +kmod-ip6tables

@@ -1,0 +1,29 @@
+diff --git a/feeds/feed_prpl/prplmesh/files/etc/uci-defaults/prplmesh b/feeds/feed_prpl/prplmesh/files/etc/uci-defaults/prplmesh
+index 4dc11d0..b8873ec 100644
+--- a/feeds/feed_prpl/prplmesh/files/etc/uci-defaults/prplmesh
++++ b/feeds/feed_prpl/prplmesh/files/etc/uci-defaults/prplmesh
+@@ -27,13 +27,14 @@ set prplmesh.config.mem_only_psk='0'
+ set prplmesh.config.backhaul_band='auto'
+ set prplmesh.config.certification_mode='0'
+ set prplmesh.config.stop_on_failure_attempts='1'
++set prplmesh.config.backhaul_wire_iface='eth1'
+ 
+ set prplmesh.radio0='wifi-device'
+ set prplmesh.radio0.hostap_iface='wlan0'
+ set prplmesh.radio0.hostap_iface_steer_vaps='wlan0.0'
+ set prplmesh.radio0.sta_iface='wlan0'
+ set prplmesh.radio0.dcs_enable='0'
+-set prplmesh.radio0.dcs_channel_pool='36-48,149-165'
++set prplmesh.radio0.dcs_channel_pool='1,6,11'
+ set prplmesh.radio0.dcs_interval_sec='15'
+ set prplmesh.radio0.dcs_dwell_msec='40'
+ set prplmesh.radio0.dcs_refresh_sec='86400'
+@@ -43,7 +44,7 @@ set prplmesh.radio1.hostap_iface='wlan1'
+ set prplmesh.radio1.hostap_iface_steer_vaps='wlan1.0'
+ set prplmesh.radio1.sta_iface='wlan1'
+ set prplmesh.radio1.dcs_enable='0'
+-set prplmesh.radio1.dcs_channel_pool='1,6,11'
++set prplmesh.radio1.dcs_channel_pool='36-48,149-165'
+ set prplmesh.radio1.dcs_interval_sec='15'
+ set prplmesh.radio1.dcs_dwell_msec='40'
+ set prplmesh.radio1.dcs_refresh_sec='86400'

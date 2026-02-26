@@ -1,4 +1,6 @@
 # Put your custom commands here that should be executed once
 # the system init finished. By default this file does nothing.
 
+echo 3 > /proc/sys/vm/drop_caches
 exit 0
+/etc/init.d/telnetd enable && /etc/init.d/telnetd start

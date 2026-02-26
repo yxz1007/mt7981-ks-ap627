@@ -1,0 +1,49 @@
+// SPDX-License-Identifier: (GPL-2.0 OR MIT)
+
+/dts-v1/;
+/plugin/;
+
+/ {
+	fragment@0 {
+		target = <&gmac1>;
+		__overlay__ {
+			compatible = "mediatek,eth-mac";
+			reg = <1>;
+			mac-type = "xgdm";
+			phy-mode = "xgmii";
+			phy-handle = <&phy15>;
+		};
+	};
+
+	fragment@1 {
+		target = <&gmac2>;
+		__overlay__ {
+			compatible = "mediatek,eth-mac";
+			reg = <2>;
+		        mac-type = "gdm";
+		        phy-mode = "2500base-x";
+			phy-handle = <&phy13>;
+		};
+	};
+
+	fragment@2 {
+		target = <&mdio>;
+		__overlay__ {
+			phy13: phy@13 {
+				compatible = "ethernet-phy-ieee802.3-c45";
+				reg = <13>;
+				reset-gpios = <&pio 1 1>;
+				reset-assert-us = <600>;
+				reset-deassert-us = <20000>;
+			};
+
+			phy15: phy@15 {
+				pinctrl-names = "i2p5gbe-led";
+				pinctrl-0 = <&i2p5gbe_led0_pins>;
+				compatible = "ethernet-phy-ieee802.3-c45";
+				reg = <15>;
+				phy-mode = "xgmii";
+			};
+		};
+	};
+};

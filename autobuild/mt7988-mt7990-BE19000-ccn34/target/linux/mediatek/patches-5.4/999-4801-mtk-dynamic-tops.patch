@@ -1,0 +1,203 @@
+--- a/drivers/net/ethernet/mediatek/mtk_eth_soc.c
++++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.c
+@@ -67,6 +67,9 @@ static const char * const mtk_clks_sourc
+ 	"sgmii_ck", "eth2pll", "wocpu0","wocpu1",
+ };
+ 
++struct net_device * (*get_tnl_dev)(uint32_t tops_crsn) = NULL;
++EXPORT_SYMBOL(get_tnl_dev);
++
+ void mtk_w32(struct mtk_eth *eth, u32 val, unsigned reg)
+ {
+ 	__raw_writel(val, eth->base + reg);
+@@ -1719,11 +1722,19 @@ static int mtk_poll_rx(struct napi_struc
+ 				      0 : RX_DMA_GET_SPORT(trxd.rxd4) - 1;
+ 		}
+ 
+-		if (unlikely(mac < 0 || mac >= MTK_MAC_COUNT ||
+-			     !eth->netdev[mac]))
+-			goto release_desc;
++		if (get_tnl_dev && trxd.rxd6) {
++			netdev = get_tnl_dev(RX_DMA_GET_TOPS_CRSN(trxd.rxd6));
++			if (IS_ERR(netdev))
++				netdev = NULL;
++		}
+ 
+-		netdev = eth->netdev[mac];
++		if (!netdev) {
++			if (unlikely(mac < 0 || mac >= MTK_MAC_COUNT ||
++				     !eth->netdev[mac]))
++				goto release_desc;
++
++			netdev = eth->netdev[mac];
++		}
+ 
+ 		if (unlikely(test_bit(MTK_RESETTING, &eth->state)))
+ 			goto release_desc;
+@@ -1807,6 +1818,7 @@ static int mtk_poll_rx(struct napi_struc
+ 
+ 		skb_hnat_alg(skb) = 0;
+ 		skb_hnat_filled(skb) = 0;
++		skb_hnat_tops(skb) = 0;
+ 		skb_hnat_magic_tag(skb) = HNAT_MAGIC_TAG;
+ 
+ 		if (skb_hnat_reason(skb) == HIT_BIND_FORCE_TO_CPU) {
+--- a/drivers/net/ethernet/mediatek/mtk_eth_soc.h
++++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.h
+@@ -1558,6 +1558,9 @@ struct mtk_mac {
+ extern const struct of_device_id of_mtk_match[];
+ extern u32 mtk_hwlro_stats_ebl;
+ 
++/* tunnel offload related */
++extern struct net_device *(*get_tnl_dev)(uint32_t tops_crsn);
++
+ /* read the hardware status register */
+ void mtk_stats_update_mac(struct mtk_mac *mac);
+ 
+--- a/drivers/net/ethernet/mediatek/mtk_hnat/hnat.c
++++ b/drivers/net/ethernet/mediatek/mtk_hnat/hnat.c
+@@ -41,6 +41,8 @@ void (*ppe_dev_register_hook)(struct net
+ EXPORT_SYMBOL(ppe_dev_register_hook);
+ void (*ppe_dev_unregister_hook)(struct net_device *dev) = NULL;
+ EXPORT_SYMBOL(ppe_dev_unregister_hook);
++int (*get_tnl_offload_idx)(__be32 sip, __be32 dip) = NULL;
++EXPORT_SYMBOL(get_tnl_offload_idx);
+ 
+ static void hnat_sma_build_entry(struct timer_list *t)
+ {
+--- a/drivers/net/ethernet/mediatek/mtk_hnat/hnat.h
++++ b/drivers/net/ethernet/mediatek/mtk_hnat/hnat.h
+@@ -1021,6 +1021,7 @@ enum FoeIpAct {
+ #define NR_WDMA0_PORT 8
+ #define NR_WDMA1_PORT 9
+ #define NR_WDMA2_PORT 13
++#define NR_TDMA_TPORT 4
+ #define NR_GMAC3_PORT 15
+ #define LAN_DEV_NAME hnat_priv->lan
+ #define LAN2_DEV_NAME hnat_priv->lan2
+@@ -1132,6 +1133,7 @@ extern int debug_level;
+ extern int hook_toggle;
+ extern int mape_toggle;
+ extern int qos_toggle;
++extern int (*get_tnl_offload_idx)(__be32 sip, __be32 dip);
+ 
+ int ext_if_add(struct extdev_entry *ext_entry);
+ int ext_if_del(struct extdev_entry *ext_entry);
+--- a/drivers/net/ethernet/mediatek/mtk_hnat/hnat_nf_hook.c
++++ b/drivers/net/ethernet/mediatek/mtk_hnat/hnat_nf_hook.c
+@@ -1609,6 +1609,13 @@ static unsigned int skb_to_hnat_info(str
+ 		}
+ 	}
+ 
++#if defined(CONFIG_MEDIATEK_NETSYS_V3)
++	if (skb_hnat_tops(skb)) {
++		entry.ipv4_hnapt.tport_id = NR_TDMA_TPORT;
++		entry.ipv4_hnapt.tops_entry = skb_hnat_tops(skb);
++	}
++#endif
++
+ 	/* The INFO2.port_mg and 2nd VLAN ID fields of PPE entry are redefined
+ 	 * by Wi-Fi whnat engine. These data and INFO2.dp will be updated and
+ 	 * the entry is set to BIND state in mtk_sw_nat_hook_tx().
+@@ -1840,5 +1847,6 @@ int mtk_sw_nat_hook_rx(struct sk_buff *s
+ 
+ 	skb_hnat_alg(skb) = 0;
++	skb_hnat_tops(skb) = 0;
+ 	skb_hnat_magic_tag(skb) = HNAT_MAGIC_TAG;
+ 
+ 	if (skb_hnat_iface(skb) == FOE_MAGIC_WED0)
+@@ -2001,6 +2009,9 @@ static unsigned int mtk_hnat_nf_post_rou
+ 	struct flow_offload_hw_path hw_path = { .dev = (struct net_device*)out,
+ 						.virt_dev = (struct net_device*)out };
+ 	const struct net_device *arp_dev = out;
++	struct ip_tunnel *tunnel = NULL;
++	struct iphdr *iph = NULL;
++	u32 tops_entry = 0;
+ 
+ 	if (skb_hnat_alg(skb) || unlikely(!is_magic_tag_valid(skb) ||
+ 					  !IS_SPACE_AVAILABLE_HEAD(skb)))
+@@ -2011,6 +2022,20 @@ static unsigned int mtk_hnat_nf_post_rou
+ 
+ 	if (out->netdev_ops->ndo_flow_offload_check) {
+ 		out->netdev_ops->ndo_flow_offload_check(&hw_path);
++
++		if (out->rtnl_link_ops &&
++		    !strcmp(out->rtnl_link_ops->kind, "gretap")) {
++			tunnel = netdev_priv(out);
++			iph = &tunnel->parms.iph;
++
++			if (get_tnl_offload_idx) {
++				tops_entry = get_tnl_offload_idx(iph->saddr,
++								 iph->daddr);
++				skb_hnat_tops(skb) = tops_entry + 32;
++				hw_path.dev = hnat_priv->g_wandev;
++			}
++		}
++
+ 		out = (IS_GMAC1_MODE) ? hw_path.virt_dev : hw_path.dev;
+ 	}
+ 
+--- a/drivers/net/ethernet/mediatek/mtk_hnat/nf_hnat_mtk.h
++++ b/drivers/net/ethernet/mediatek/mtk_hnat/nf_hnat_mtk.h
+@@ -44,7 +44,8 @@ struct hnat_desc {
+ 	u32 is_sp : 1;
+ 	u32 hf : 1;
+ 	u32 amsdu : 1;
+-	u32 resv3 : 19;
++	u32 tops : 6;
++	u32 resv3 : 13;
+ 	u32 magic_tag_protect : 16;
+ } __packed;
+ #elif defined(CONFIG_MEDIATEK_NETSYS_V2)
+@@ -92,6 +93,7 @@ struct hnat_desc {
+ 	((((skb_headroom(skb) >= FOE_INFO_LEN) ? 1 : 0)))
+ 
+ #define skb_hnat_info(skb) ((struct hnat_desc *)(skb->head))
++#define skb_hnat_tops(skb) (((struct hnat_desc *)((skb)->head))->tops)
+ #define skb_hnat_magic(skb) (((struct hnat_desc *)(skb->head))->magic)
+ #define skb_hnat_reason(skb) (((struct hnat_desc *)(skb->head))->crsn)
+ #define skb_hnat_entry(skb) (((struct hnat_desc *)(skb->head))->entry)
+--- a/net/ipv4/ip_gre.c
++++ b/net/ipv4/ip_gre.c
+@@ -39,6 +39,7 @@
+ #include <net/inet_ecn.h>
+ #include <net/xfrm.h>
+ #include <net/net_namespace.h>
++#include <net/netfilter/nf_flow_table.h>
+ #include <net/netns/generic.h>
+ #include <net/rtnetlink.h>
+ #include <net/gre.h>
+@@ -901,6 +902,23 @@ static int ipgre_close(struct net_device
+ }
+ #endif
+ 
++#if IS_ENABLED(CONFIG_NF_FLOW_TABLE)
++static int gre_dev_flow_offload_check(struct flow_offload_hw_path *path)
++{
++	struct net_device *dev = path->dev;
++	struct ip_tunnel *tunnel = netdev_priv(dev);
++
++	if (path->flags & FLOW_OFFLOAD_PATH_TNL)
++		return -EEXIST;
++
++	path->flags |= FLOW_OFFLOAD_PATH_TNL;
++	path->virt_dev = dev;
++	path->dev = tunnel->dev;
++
++	return 0;
++}
++#endif /* CONFIG_NF_FLOW_TABLE */
++
+ static const struct net_device_ops ipgre_netdev_ops = {
+ 	.ndo_init		= ipgre_tunnel_init,
+ 	.ndo_uninit		= ip_tunnel_uninit,
+@@ -1264,6 +1282,9 @@ static const struct net_device_ops gre_t
+ 	.ndo_get_stats64	= ip_tunnel_get_stats64,
+ 	.ndo_get_iflink		= ip_tunnel_get_iflink,
+ 	.ndo_fill_metadata_dst	= gre_fill_metadata_dst,
++#if IS_ENABLED(CONFIG_NF_FLOW_TABLE)
++	.ndo_flow_offload_check = gre_dev_flow_offload_check,
++#endif
+ };
+ 
+ static int erspan_tunnel_init(struct net_device *dev)

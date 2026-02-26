@@ -1,0 +1,37 @@
+diff --git a/feeds/feed_prpl/prplmesh/Makefile b/feeds/feed_prpl/prplmesh/Makefile
+index 85ce63f..9fbc7d4 100644
+--- a/feeds/feed_prpl/prplmesh/Makefile
++++ b/feeds/feed_prpl/prplmesh/Makefile
+@@ -12,8 +12,6 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/prplMesh-$(PKG_REV)
+ 
+ PKG_CONFIG_DEPENDS:= \
+ 	CONFIG_WIRELESS_STA \
+-	CONFIG_TARGET_intel_mips \
+-	CONFIG_TARGET_brcmbca \
+ 	CONFIG_USE_PRPLMESH_WHM \
+ 	CONFIG_PACKAGE_libamxb
+ 
+@@ -47,9 +45,7 @@ define Package/prplmesh
+ 		+TARGET_intel_mips:bridge-ugw
+ #	non-intel_mips neither broadcom dependencies:
+ 	DEPENDS+= \
+-		+!(TARGET_intel_mips||TARGET_brcmbca):hostapd-openssl \
+-		+!(TARGET_intel_mips||TARGET_brcmbca):hostapd-utils \
+-		+!(TARGET_intel_mips||TARGET_brcmbca):wpa-supplicant-openssl
++		+!TARGET_intel_mips:wpad-openssl \
+ #	The ambiorix library is optional, select it if libamxb is selected:
+ 	DEPENDS+= +PACKAGE_libamxb:libamxb \
+ 		+PACKAGE_libamxb:libamxc \
+@@ -82,10 +78,10 @@ endif
+ ifeq ($(CONFIG_PACKAGE_libamxb),y)
+ 	CMAKE_OPTIONS += -DENABLE_NBAPI=ON
+ ifeq ($(CONFIG_PACKAGE_mod-amxb-ubus),y)
+-	CMAKE_OPTIONS += -DUBUS_SOCK="-DAMBIORIX_BACKEND_PATH=\\\"/usr/bin/mods/amxb/mod-amxb-ubus.so\\\" -DAMBIORIX_BUS_URI=\\\"ubus:/var/run/ubus.sock\\\""
++	CMAKE_OPTIONS += -DUBUS_SOCK="-DAMBIORIX_BACKEND_PATH=\\\"/usr/bin/mods/amxb/mod-amxb-ubus.so\\\" -DAMBIORIX_BUS_URI=\\\"ubus:/var/run/ubus/ubus.sock\\\""
+ ifeq ($(CONFIG_USE_PRPLMESH_WHM),y)
+ 	CMAKE_OPTIONS += -DUSE_PRPLMESH_WHM=ON
+-	CMAKE_OPTIONS += -DWBAPI_SOCK="-DAMBIORIX_WBAPI_BACKEND_PATH=\\\"/usr/bin/mods/amxb/mod-amxb-ubus.so\\\" -DAMBIORIX_WBAPI_BUS_URI=\\\"ubus:/var/run/ubus.sock\\\""
++	CMAKE_OPTIONS += -DWBAPI_SOCK="-DAMBIORIX_WBAPI_BACKEND_PATH=\\\"/usr/bin/mods/amxb/mod-amxb-ubus.so\\\" -DAMBIORIX_WBAPI_BUS_URI=\\\"ubus:/var/run/ubus/ubus.sock\\\""
+ endif
+ endif
+ endif

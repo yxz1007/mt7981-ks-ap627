@@ -1,0 +1,59 @@
+From 8b11babd114e0190e9b15e90fc81a98d2952bc11 Mon Sep 17 00:00:00 2001
+From: Michael Lee <michael-cy.lee@mediatek.com>
+Date: Tue, 25 Apr 2023 14:50:17 +0800
+Subject: [PATCH] append phy mode and bw configuration
+
+---
+ .../network/services/hostapd/files/hostapd.sh | 32 +++++++++++++++----
+ 1 file changed, 25 insertions(+), 7 deletions(-)
+
+diff --git a/package/network/services/hostapd/files/hostapd.sh b/package/network/services/hostapd/files/hostapd.sh
+index 5e21d0d..157bc8b 100644
+--- a/package/network/services/hostapd/files/hostapd.sh
++++ b/package/network/services/hostapd/files/hostapd.sh
+@@ -1277,17 +1277,35 @@ wpa_supplicant_set_fixed_freq() {
+ 	append network_data "fixed_freq=1" "$N$T"
+ 	append network_data "frequency=$freq" "$N$T"
+ 	case "$htmode" in
+-		NOHT) append network_data "disable_ht=1" "$N$T";;
+-		HE20|HT20|VHT20) append network_data "disable_ht40=1" "$N$T";;
+-		HT40*|VHT40|VHT80|VHT160|HE40|HE80|HE160) append network_data "ht40=1" "$N$T";;
++		HE20|HT20|VHT20|HE20|EHT20) append network_data "disable_ht40=1" "$N$T";;
++		HT40*|VHT40|VHT80|VHT160|HE40|HE80|HE160|EHT40|EHT80|EHT160|EHT320) append network_data "ht40=1" "$N$T";;
+ 	esac
+ 	case "$htmode" in
+-		VHT*) append network_data "vht=1" "$N$T";;
++		NOHT)
++			append network_data "disable_ht=1" "$N$T"
++			append network_data "disable_vht=1" "$N$T"
++			append network_data "disable_he=1" "$N$T"
++			append network_data "disable_eht=1" "$N$T"
++			;;
++		HT*)
++			append network_data "disable_vht=1" "$N$T"
++			append network_data "disable_he=1" "$N$T"
++			append network_data "disable_eht=1" "$N$T"
++			;;
++		VHT*)
++			append network_data "vht=1" "$N$T"
++			append network_data "disable_he=1" "$N$T"
++			append network_data "disable_eht=1" "$N$T"
++			;;
++		HE*)
++			append network_data "disable_eht=1" "$N$T"
++			;;
+ 	esac
+ 	case "$htmode" in
+-		HE80|VHT80) append network_data "max_oper_chwidth=1" "$N$T";;
+-		HE160|VHT160) append network_data "max_oper_chwidth=2" "$N$T";;
+-		HE20|HE40|VHT20|VHT40) append network_data "max_oper_chwidth=0" "$N$T";;
++		EHT80|HE80|VHT80) append network_data "max_oper_chwidth=1" "$N$T";;
++		EHT160|HE160|VHT160) append network_data "max_oper_chwidth=2" "$N$T";;
++		EHT320*) append network_data "max_oper_chwidth=9" "$N$T";;
++		EHT20|EHT40|HE20|HE40|VHT20|VHT40) append network_data "max_oper_chwidth=0" "$N$T";;
+ 		*) append network_data "disable_vht=1" "$N$T";;
+ 	esac
+ }
+-- 
+2.25.1
+

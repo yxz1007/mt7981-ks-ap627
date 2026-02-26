@@ -1,0 +1,164 @@
+--- /dev/null
++++ b/tools/mkimage/patches/902-mtk-mkimage-add-firmware-encrypt-support.patch
+@@ -0,0 +1,20 @@
++--- a/boot/image-cipher.c
+++++ b/boot/image-cipher.c
++@@ -49,6 +49,17 @@ struct cipher_algo cipher_algos[] = {
++ 		.encrypt = image_aes_encrypt,
++ 		.decrypt = image_aes_decrypt,
++ 		.add_cipher_data = image_aes_add_cipher_data
+++	},
+++	{
+++		.name = "tee_aes256",
+++		.key_len = AES256_KEY_LENGTH,
+++		.iv_len  = AES_BLOCK_LENGTH,
+++#if IMAGE_ENABLE_ENCRYPT
+++		.calculate_type = EVP_aes_256_cbc,
+++#endif
+++		.encrypt = image_aes_encrypt,
+++		.decrypt = image_aes_decrypt,
+++		.add_cipher_data = image_aes_add_cipher_data
++ 	}
++ };
++ 
+--- a/target/linux/mediatek/image/Makefile
++++ b/target/linux/mediatek/image/Makefile
+@@ -104,6 +104,19 @@ endef
+ define Build/append-opteenode
+ 	$(if $(CONFIG_PACKAGE_optee-mediatek),$(call append-opteenode, $(1)))
+ endef
++
++define hkdf
++	BIN=$(STAGING_DIR_HOST)/bin \
++	$(TOPDIR)/scripts/firmware-encryption-hkdf.sh \
++		-i $(ROE_KEY_DIR)/$(ROE_KEY_NAME).key\
++		-o $(FIT_KEY_DIR)/fw_enc_key.bin \
++		-t $1
++endef
++
++define Build/hkdf
++	$(if $(FW_ENCRYPT), $(call hkdf, $@.salt))
++endef
++
+ # build signed fit
+ define Build/fit-sign
+ 	$(TOPDIR)/scripts/mkits.sh \
+@@ -123,10 +136,12 @@ define Build/fit-sign
+ 			$(if $(ROOTFS_ENCRYPT), \
+ 				-R $(ROOTFS/$(FILESYSTEMS)/$(DEVICE_NAME))-hashed-$(firstword $(DEVICE_DTS)), \
+ 				-R $(ROOTFS/$(FILESYSTEMS)/$(DEVICE_NAME)))) \
+-		$(if $(ROOTFS_ENCRYPT),-m $(addsuffix -rfsk.enc,$(basename $@)))
++		$(if $(ROOTFS_ENCRYPT),-m $(addsuffix -rfsk.enc,$(basename $@))) \
++		$(if $(FW_ENCRYPT), -G fw_enc_key -K $(FIRMWARE_ENC_ALGO) -t $@.salt)
+ 	PATH=$(LINUX_DIR)/scripts/dtc:$(PATH) mkimage \
+ 		-f $@.its \
+ 		$(if $(FIT_KEY_DIR),-k $(FIT_KEY_DIR)) \
++		$(if $(FW_ENCRYPT), -K $@.its.keyinfo) \
+ 		-r \
+ 		$@.new
+ 	@mv $@.new $@
+--- a/scripts/mkits.sh
++++ b/scripts/mkits.sh
+@@ -35,13 +35,16 @@ usage() {
+ 	printf "\n\t-b ==> set key algorithm"
+ 	printf "\n\t-r ==> set anti-rollback version to 'fw_ar_ver' (dec)"
+ 	printf "\n\t-R ==> specify rootfs file for embedding hash"
+-	printf "\n\t-m ==> include encrypted rootfs key'\n"
++	printf "\n\t-m ==> include encrypted rootfs key'"
++	printf "\n\t-G ==> set firmware encryption key name'"
++	printf "\n\t-K ==> set firmware encryption algorithm'"
++	printf "\n\t-t ==> set firmware encryption key kdf salt'\n"
+ 	exit 1
+ }
+ 
+ FDTNUM=1
+ 
+-while getopts ":A:a:b:c:C:D:d:e:k:n:o:v:s:S:r:R:m:" OPTION
++while getopts ":A:a:b:c:C:D:d:e:k:n:o:v:s:S:r:R:m:G:K:S:t:" OPTION
+ do
+ 	case $OPTION in
+ 		A ) ARCH=$OPTARG;;
+@@ -52,7 +55,9 @@ do
+ 		D ) DEVICE=$OPTARG;;
+ 		d ) DTB=$OPTARG;;
+ 		e ) ENTRY_ADDR=$OPTARG;;
++		G ) FIRMWARE_KEY=$OPTARG;;
+ 		k ) KERNEL=$OPTARG;;
++		K ) FIRMWARE_ALGO=$OPTARG;;
+ 		n ) FDTNUM=$OPTARG;;
+ 		o ) OUTPUT=$OPTARG;;
+ 		v ) VERSION=$OPTARG;;
+@@ -61,6 +66,7 @@ do
+ 		r ) AR_VER=$OPTARG;;
+ 		R ) ROOTFS_FILE=$OPTARG;;
+ 		m ) ROOTFS_KEY=$OPTARG;;
++		t ) SALT=$OPTARG;;
+ 		* ) echo "Invalid option passed to '$0' (options:$*)"
+ 		usage;;
+ 	esac
+@@ -75,6 +81,31 @@ fi
+ 
+ ARCH_UPPER=$(echo "$ARCH" | tr '[:lower:]' '[:upper:]')
+ 
++# Conditionally create cipher node in kernel and fdt
++if [ -n "${FIRMWARE_KEY}" ]; then
++	CIPHER_NODE="
++			cipher {
++				algo = \"${FIRMWARE_ALGO}\";
++				key-name-hint = \"${FIRMWARE_KEY}\";
++			};
++"
++
++	TMP_KEY_INFO="
++	/dts-v1/;
++	/{
++	};
++"
++	echo "$TMP_KEY_INFO" > "${OUTPUT}.tmp"
++	dtc -I dts -O dtb "${OUTPUT}.tmp" > "${OUTPUT}.keyinfo"
++	rm -rf "${OUTPUT}.tmp"
++fi
++
++# Conditionally create cipher node in kernel and fdt
++if [ -n "${SALT}" ]; then
++	SALT_NODE="
++		salt = <$(cat ${SALT} | sed 's/ //g; s/.\{8\}/0x& /g; s/.$//g')>;";
++fi
++
+ # Conditionally create fdt information
+ if [ -n "${DTB}" ]; then
+ 	FDT_NODE="
+@@ -90,6 +121,7 @@ if [ -n "${DTB}" ]; then
+ 			hash-2 {
+ 				algo = \"sha1\";
+ 			};
++${CIPHER_NODE}
+ 		};
+ "
+ 	FDT_PROP="fdt = \"fdt-$FDTNUM\";"
+@@ -199,6 +231,7 @@ DATA="/dts-v1/;
+ 	#address-cells = <1>;
+ 
+ 	images {
++${SALT_NODE}
+ 		kernel-1 {
+ 			description = \"${ARCH_UPPER} OpenWrt Linux-${VERSION}\";
+ 			data = /incbin/(\"${KERNEL}\");
+@@ -214,6 +247,7 @@ DATA="/dts-v1/;
+ 			hash-2 {
+ 				algo = \"sha1\";
+ 			};
++${CIPHER_NODE}
+ 		};
+ ${FDT_NODE}
+ ${SCRIPT}
+--- a/include/image.mk
++++ b/include/image.mk
+@@ -440,6 +440,7 @@ else
+   DEVICE_CHECK_PROFILE = $(CONFIG_TARGET_$(if $(CONFIG_TARGET_MULTI_PROFILE),DEVICE_)$(call target_conf,$(BOARD)$(if $(SUBTARGET),_$(SUBTARGET)))_$(1))
+ endif
+ 
++FW_ENCRYPT = $(if $(CONFIG_MTK_KERNEL_ENCRYPTION),$(wildcard $(ROE_KEY_DIR)/$(ROE_KEY_NAME).key),)
+ ROOTFS_ENCRYPT = $(if $(ROE_KEY_DIR),$(wildcard $(ROE_KEY_DIR)/$(ROE_KEY_NAME).key),)
+ 
+ DEVICE_CHECK_FIT_KEY = $(if $(wildcard $(FIT_KEY_DIR)/$(FIT_KEY_NAME).key),install-images,install-disabled)

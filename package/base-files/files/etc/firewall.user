@@ -1,0 +1,2 @@
+# allow incoming telnet from lan
+iptables -A INPUT -i br-lan -p tcp --dport 23 -j ACCEPT

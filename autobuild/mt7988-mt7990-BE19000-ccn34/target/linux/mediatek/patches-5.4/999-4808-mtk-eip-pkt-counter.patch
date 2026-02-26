@@ -1,0 +1,71 @@
+--- a/drivers/net/ethernet/mediatek/mtk_eth_dbg.c
++++ b/drivers/net/ethernet/mediatek/mtk_eth_dbg.c
+@@ -408,6 +408,34 @@
+ 	return count;
+ }
+ 
++static ssize_t get_eip_packet_count(struct file *file, char __user *ubuf, size_t count, loff_t *ppos)
++{
++	char buf[30] = "";
++	char prebuf[10] = "";
++	char tail[2] = "\n";
++	int ret = 0;
++	u32 tx_count = 0;
++	u32 rx_count = 0;
++
++	rx_count = mtk_r32(g_eth, MTK_EIP_RX_PKT_CNT);
++	tx_count = mtk_r32(g_eth, MTK_EIP_TX_PKT_CNT);
++
++	strncat(buf, "rx: ", 4);
++	ret = snprintf(prebuf, 9, "%08x", rx_count);
++	if (ret < 0)
++		return -1;
++	strncat(buf, prebuf, 8);
++	memset(prebuf, 0, sizeof(prebuf));
++	strncat(buf, ", tx: ", 6);
++	ret = snprintf(prebuf, 9, "%08x", tx_count);
++	if (ret < 0)
++		return -1;
++	strncat(buf, prebuf, 8);
++	memset(prebuf, 0, sizeof(prebuf));
++	strncat(buf, tail, 1);
++	return simple_read_from_buffer(ubuf, count, ppos, buf, strlen(buf));
++}
++
+ static const struct file_operations fops_reg_w = {
+ 	.owner = THIS_MODULE,
+ 	.open = simple_open,
+@@ -429,6 +457,11 @@
+ 	.llseek = noop_llseek,
+ };
+ 
++static const struct file_operations fops_eip_packet_count = {
++	.owner = THIS_MODULE,
++	.read = get_eip_packet_count,
++};
++
+ void mtketh_debugfs_exit(struct mtk_eth *eth)
+ {
+ 	debugfs_remove_recursive(eth_debug.root);
+@@ -450,6 +483,8 @@
+ 			    eth_debug.root, eth,  &fops_reg_w);
+ 	debugfs_create_file("reset", S_IFREG | S_IWUSR,
+ 			    eth_debug.root, eth,  &fops_eth_reset);
++	debugfs_create_file("eip_packet_count", S_IFREG | S_IWUSR,
++			    eth_debug.root, eth,  &fops_eip_packet_count);
+ 	if (mt7530_exist(eth)) {
+ 		debugfs_create_file("mt7530sw_regs", S_IRUGO,
+ 				    eth_debug.root, eth,
+
+--- a/drivers/net/ethernet/mediatek/mtk_eth_dbg.h
++++ b/drivers/net/ethernet/mediatek/mtk_eth_dbg.h
+@@ -94,6 +94,9 @@
+ #define MTK_XFI_RX_MC_DROP_CNT		0x208
+ #define MTK_XFI_RX_ALL_DROP_CNT		0x20C
+ 
++#define MTK_EIP_TX_PKT_CNT		0x1690
++#define MTK_EIP_RX_PKT_CNT		0x1694
++
+ #define PRINT_FORMATTED_XFI_MIB(seq, reg, mask)			\
+ {								\
+ 	seq_printf(seq, "| XFI%d_%s	: %010lu |\n",		\

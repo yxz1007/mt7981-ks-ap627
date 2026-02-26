@@ -1,0 +1,91 @@
+From ee747860d2e82446da4ea16d88b0553a1c7915b3 Mon Sep 17 00:00:00 2001
+From: Zhanyong Wang <zhanyong.wang@mediatek.com>
+Date: Mon, 22 Mar 2021 13:41:54 +0800
+Subject: [PATCH 1/2] [PATCH 1/2] tphy: add Mediatek FPGA tphy daughter card
+ support
+
+intergrate FPGA A60931 daughter card driver for panther project
+
+CR-Id: WCNCR00218094
+Signed-off-by: Zhanyong Wang <zhanyong.wang@mediatek.com>
+---
+ drivers/phy/mediatek/Kconfig  | 47 +++++++++++++++++++++++++++++++++++
+ drivers/phy/mediatek/Makefile |  5 ++++
+ 2 files changed, 52 insertions(+)
+
+diff --git a/drivers/phy/mediatek/Kconfig b/drivers/phy/mediatek/Kconfig
+index 376f5d189da0..e114ca665e60 100644
+--- a/drivers/phy/mediatek/Kconfig
++++ b/drivers/phy/mediatek/Kconfig
+@@ -14,6 +14,53 @@ config PHY_MTK_TPHY
+ 	  multi-ports is first version, otherwise is second veriosn,
+ 	  so you can easily distinguish them by banks layout.
+ 
++config PHY_MTK_USB3_I2C_FPGA
++	tristate "Mediatek FPGA USB I2C Driver"
++	depends on ARCH_MEDIATEK && OF
++	select GENERIC_PHY
++	help
++	  Enable this to support for Mediatek USB 3.0 PHY I2c Interface driver,
++	  MTK MD1122, MS0796 and so on.
++
++	  It supports multiple usb 2.0 and usb 3.0 ports.
++	  This i2c interface is internal bus special for Medaitek USB 3.0
++	  PHY transceiver. In general, these daughter card is used
++	  to develop or verify usb feature in FPGA environment.
++
++config PHY_MTK_A60810
++	tristate "Mediatek FPGA USB 2.0 PHY Driver"
++	depends on ARCH_MEDIATEK && OF
++	select PHY_MTK_USB3_I2C_FPGA
++	help
++	  Enable this to add support the transceiver that is Mediatek USB 2.0
++	  MD1122 PHY daughter board driver with chip AT60810AG.
++
++	  This driver controls the entire PHY block usb 2.0 PHYs.
++	  And we use xHCI IP MAC module that MTK customered.
++
++config PHY_MTK_A60931
++	tristate "Mediatek FPGA USB 3.0 PHY Driver"
++	depends on ARCH_MEDIATEK && OF
++	select PHY_MTK_USB3_I2C_FPGA
++	help
++	  Enable this to add support the transceiver that is Mediatek USB 3.0
++	  MS0796 PHY daughter board driver with chip A60931.
++
++	  This driver controls the entire PHY block usb 3.0/2.0 PHYs.
++	  And we use xHCI IP MAC module that MTK customered.
++
++config PHY_MTK_A60XXX
++	tristate "Mediatek FPGA USB 3.0 multi-PHY Driver"
++	depends on ARCH_MEDIATEK && OF
++	select PHY_MTK_USB3_I2C_FPGA
++	help
++	  Enable this to add support the transceiver that is Mediatek USB 3.0
++	  MS0796 PHY daughter board driver with chip AT60810AG.
++	  MD1122 PHY daughter board driver with chip A60931.
++
++	  This driver controls the entire PHY block usb 3.0/2.0 PHYs.
++	  And we use xHCI IP MAC module that MTK customered.
++
+ config PHY_MTK_UFS
+ 	tristate "MediaTek UFS M-PHY driver"
+ 	depends on ARCH_MEDIATEK && OF
+diff --git a/drivers/phy/mediatek/Makefile b/drivers/phy/mediatek/Makefile
+index 08a8e6a97b1e..1ac154b0ba1b 100644
+--- a/drivers/phy/mediatek/Makefile
++++ b/drivers/phy/mediatek/Makefile
+@@ -4,5 +4,10 @@
+ #
+ 
+ obj-$(CONFIG_PHY_MTK_TPHY)		+= phy-mtk-tphy.o
++# FPGA USB Daughter-Board Drivers
++obj-$(CONFIG_PHY_MTK_USB3_I2C_FPGA)	+= phy-mtk-u3phy-i2c.o
++obj-$(CONFIG_PHY_MTK_A60810)		+= phy-mtk-a60810.o
++obj-$(CONFIG_PHY_MTK_A60931)		+= phy-mtk-a60931.o
++obj-$(CONFIG_PHY_MTK_A60XXX)		+= phy-mtk-a60xxx.o
+ obj-$(CONFIG_PHY_MTK_UFS)		+= phy-mtk-ufs.o
+ obj-$(CONFIG_PHY_MTK_XSPHY)		+= phy-mtk-xsphy.o
+-- 
+2.18.0
+

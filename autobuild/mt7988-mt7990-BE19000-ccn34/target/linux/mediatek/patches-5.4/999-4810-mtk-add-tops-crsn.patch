@@ -1,0 +1,28 @@
+--- a/drivers/net/ethernet/mediatek/mtk_eth_soc.c
++++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.c
+@@ -2182,6 +2182,7 @@
+ 	u8 *data, *new_data;
+ 	struct mtk_rx_dma_v2 *rxd, trxd;
+ 	int done = 0;
++	int set_tops_crsn = 0;
+ 
+ 	if (unlikely(!ring))
+ 		goto rx_done;
+@@ -2222,6 +2223,8 @@
+ 			netdev = get_tnl_dev(RX_DMA_GET_TOPS_CRSN(trxd.rxd6));
+ 			if (IS_ERR(netdev))
+ 				netdev = NULL;
++			else
++				set_tops_crsn = RX_DMA_GET_TOPS_CRSN(trxd.rxd6);
+ 		}
+ 
+ 		if (!netdev) {
+@@ -2271,6 +2274,8 @@
+ 		pktlen = RX_DMA_GET_PLEN0(trxd.rxd2);
+ 		skb->dev = netdev;
+ 		skb_put(skb, pktlen);
++		if (set_tops_crsn)
++			skb->cb[40] = set_tops_crsn; 
+ 
+ 		if ((MTK_HAS_CAPS(eth->soc->caps, MTK_NETSYS_RX_V2)))
+ 			rxdcsum = &trxd.rxd3;

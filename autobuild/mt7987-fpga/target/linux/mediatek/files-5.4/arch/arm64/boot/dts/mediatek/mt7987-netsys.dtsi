@@ -1,0 +1,267 @@
+// SPDX-License-Identifier: (GPL-2.0 OR MIT)
+/*
+ * Copyright (C) 2023 MediaTek Inc.
+ * Author: Sam.Shih <sam.shih@mediatek.com>
+ */
+
+&netsys {
+	hnat: hnat@15000000 {
+		compatible = "mediatek,mtk-hnat_v5";
+		reg = <0 0x15100000 0 0x80000>;
+		resets = <&ethsys 0>;
+		reset-names = "mtketh";
+		mtketh-wan = "eth1";
+		mtketh-lan = "lan";
+		mtketh-lan2 = "eth2";
+		mtketh-max-gmac = <3>;
+		status = "disabled";
+	};
+
+	switch0: switch0@15020000 {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		compatible = "mediatek,mt7988-switch", "syscon";
+		reg = <0 0x15020000 0 0x8000>;
+		status = "disabled";
+	};
+
+	ethwarp: syscon@15031000 {
+		compatible = "mediatek,mt7988-ethwarp", "syscon";
+		reg = <0 0x15031000 0 0x1000>;
+		#clock-cells = <1>;
+	};
+
+	eth: ethernet@15100000 {
+		compatible = "mediatek,mt7988-eth";
+		reg = <0 0x15100000 0 0x80000>,
+		      <0 0x15400000 0 0x380000>;
+		interrupts = <GIC_SPI 189 IRQ_TYPE_LEVEL_HIGH>,
+			     <GIC_SPI 190 IRQ_TYPE_LEVEL_HIGH>,
+			     <GIC_SPI 191 IRQ_TYPE_LEVEL_HIGH>,
+			     <GIC_SPI 192 IRQ_TYPE_LEVEL_HIGH>,
+			     <GIC_SPI 196 IRQ_TYPE_LEVEL_HIGH>,
+			     <GIC_SPI 197 IRQ_TYPE_LEVEL_HIGH>,
+			     <GIC_SPI 198 IRQ_TYPE_LEVEL_HIGH>,
+			     <GIC_SPI 199 IRQ_TYPE_LEVEL_HIGH>;
+		clocks = <&ethsys CK_ETHDMA_XGP1_EN>,
+			 <&ethsys CK_ETHDMA_XGP2_EN>,
+			 <&ethsys CK_ETHDMA_XGP3_EN>,
+			 <&ethsys CK_ETHDMA_FE_EN>,
+			 <&ethsys CK_ETHDMA_GP2_EN>,
+			 <&ethsys CK_ETHDMA_GP1_EN>,
+			 <&ethsys CK_ETHDMA_GP3_EN>,
+			 <&ethsys CK_ETHDMA_ESW_EN>,
+			 <&ethsys CK_ETHDMA_CRYPT0_EN>,
+			 <&sgmiisys0 CK_SGM0_TX_EN>,
+			 <&sgmiisys0 CK_SGM0_RX_EN>,
+			 <&sgmiisys1 CK_SGM1_TX_EN>,
+			 <&sgmiisys1 CK_SGM1_RX_EN>,
+			 <&ethwarp CK_ETHWARP_WOCPU2_EN>,
+			 <&ethwarp CK_ETHWARP_WOCPU1_EN>,
+			 <&ethwarp CK_ETHWARP_WOCPU0_EN>,
+			 <&topckgen CK_TOP_USXGMII_SBUS_0_SEL>,
+			 <&topckgen CK_TOP_USXGMII_SBUS_1_SEL>,
+			 <&topckgen CK_TOP_SGM_0_SEL>,
+			 <&topckgen CK_TOP_SGM_1_SEL>,
+			 <&topckgen CK_TOP_XFI_PHY_0_XTAL_SEL>,
+			 <&topckgen CK_TOP_XFI_PHY_1_XTAL_SEL>,
+			 <&topckgen CK_TOP_ETH_GMII_SEL>,
+			 <&topckgen CK_TOP_ETH_REFCK_50M_SEL>,
+			 <&topckgen CK_TOP_ETH_SYS_200M_SEL>,
+			 <&topckgen CK_TOP_ETH_SYS_SEL>,
+			 <&topckgen CK_TOP_ETH_XGMII_SEL>,
+			 <&topckgen CK_TOP_ETH_MII_SEL>,
+			 <&topckgen CK_TOP_NETSYS_SEL>,
+			 <&topckgen CK_TOP_NETSYS_500M_SEL>,
+			 <&topckgen CK_TOP_NETSYS_PAO_2X_SEL>,
+			 <&topckgen CK_TOP_NETSYS_SYNC_250M_SEL>,
+			 <&topckgen CK_TOP_NETSYS_PPEFB_250M_SEL>,
+			 <&topckgen CK_TOP_NETSYS_WARP_SEL>;
+		clock-names = "xgp1", "xgp2", "xgp3", "fe", "gp2", "gp1",
+			      "gp3", "esw", "crypto", "sgmii_tx250m",
+			      "sgmii_rx250m", "sgmii2_tx250m", "sgmii2_rx250m",
+			      "ethwarp_wocpu2", "ethwarp_wocpu1",
+			      "ethwarp_wocpu0", "top_usxgmii0_sel",
+			      "top_usxgmii1_sel", "top_sgm0_sel",
+			      "top_sgm1_sel", "top_xfi_phy0_xtal_sel",
+			      "top_xfi_phy1_xtal_sel", "top_eth_gmii_sel",
+			      "top_eth_refck_50m_sel", "top_eth_sys_200m_sel",
+			      "top_eth_sys_sel", "top_eth_xgmii_sel",
+			      "top_eth_mii_sel", "top_netsys_sel",
+			      "top_netsys_500m_sel", "top_netsys_pao_2x_sel",
+			      "top_netsys_sync_250m_sel",
+			      "top_netsys_ppefb_250m_sel",
+			      "top_netsys_warp_sel";
+		assigned-clocks = <&topckgen CK_TOP_NETSYS_2X_SEL>,
+				  <&topckgen CK_TOP_NETSYS_GSW_SEL>,
+				  <&topckgen CK_TOP_USXGMII_SBUS_0_SEL>,
+				  <&topckgen CK_TOP_USXGMII_SBUS_1_SEL>,
+				  <&topckgen CK_TOP_SGM_0_SEL>,
+				  <&topckgen CK_TOP_SGM_1_SEL>;
+		assigned-clock-parents = <&topckgen CK_TOP_CB_NET2_800M>,
+					 <&topckgen CK_TOP_CB_NET1_D4>,
+					 <&topckgen CK_TOP_NET1_D8_D4>,
+					 <&topckgen CK_TOP_NET1_D8_D4>,
+					 <&topckgen CK_TOP_CB_SGM_325M>,
+					 <&topckgen CK_TOP_CB_SGM_325M>;
+		mediatek,ethsys = <&ethsys>;
+		mediatek,sgmiisys = <&sgmiisys0>, <&sgmiisys1>;
+		mediatek,usxgmiisys = <&usxgmiisys0>, <&usxgmiisys1>;
+		mediatek,xfi_pextp = <&xfi_pextp0>, <&xfi_pextp1>;
+		mediatek,xfi_pll = <&xfi_pll>;
+		mediatek,infracfg = <&topmisc>;
+		mediatek,toprgu = <&watchdog>;
+		mediatek,hwver = <&hwver>;
+		#reset-cells = <1>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		status = "disabled";
+
+		gmac0: mac@0 {
+			compatible = "mediatek,eth-mac";
+			reg = <0>;
+			mac-type = "xgdm";
+			phy-mode = "10gbase-kr";
+
+			fixed-link {
+				speed = <10000>;
+				full-duplex;
+				pause;
+			};
+		};
+
+		gmac1: mac@1 {
+			compatible = "mediatek,eth-mac";
+			reg = <1>;
+			mac-type = "xgdm";
+			phy-mode = "usxgmii";
+			phy-handle = <&phy0>;
+		};
+
+		gmac2: mac@2 {
+			compatible = "mediatek,eth-mac";
+			reg = <2>;
+			mac-type = "xgdm";
+			phy-mode = "usxgmii";
+			phy-handle = <&phy8>;
+		};
+
+		mdio: mdio-bus {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			clock-frequency = <10500000>;
+
+			phy0: ethernet-phy@0 {
+				reg = <0>;
+				compatible = "ethernet-phy-ieee802.3-c45";
+				reset-gpios = <&pio 72 1>;
+				reset-assert-us = <100000>;
+				reset-deassert-us = <221000>;
+				mdi-reversal = /bits/ 16 <1>;
+			};
+
+			phy8: ethernet-phy@8 {
+				reg = <8>;
+				compatible = "ethernet-phy-ieee802.3-c45";
+				reset-gpios = <&pio 71 1>;
+				reset-assert-us = <100000>;
+				reset-deassert-us = <221000>;
+				mdi-reversal = /bits/ 16 <1>;
+			};
+
+			switch: switch@0 {
+				compatible = "mediatek,mt7988";
+				reg = <31>;
+			};
+		};
+	};
+};
+
+&switch {
+	ports {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		port@0 {
+			reg = <0>;
+			label = "lan0";
+			phy-mode = "gmii";
+			phy-handle = <&sphy0>;
+		};
+
+		port@1 {
+			reg = <1>;
+			label = "lan1";
+			phy-mode = "gmii";
+			phy-handle = <&sphy1>;
+		};
+
+		port@2 {
+			reg = <2>;
+			label = "lan2";
+			phy-mode = "gmii";
+			phy-handle = <&sphy2>;
+		};
+
+		port@3 {
+			reg = <3>;
+			label = "lan3";
+			phy-mode = "gmii";
+			phy-handle = <&sphy3>;
+		};
+
+		port@6 {
+			reg = <6>;
+			label = "cpu";
+			ethernet = <&gmac0>;
+			phy-mode = "10gbase-kr";
+			fixed-link {
+				speed = <10000>;
+				full-duplex;
+				pause;
+			};
+		};
+	};
+
+	mdio {
+		compatible = "mediatek,dsa-slave-mdio";
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		sphy0: switch_phy0@0 {
+			compatible = "ethernet-phy-id03a2.9481";
+			reg = <0>;
+			pinctrl-names = "gbe-led";
+			pinctrl-0 = <&gbe0_led0_pins>;
+			nvmem-cells = <&phy_calibration_p0>;
+			nvmem-cell-names = "phy-cal-data";
+		};
+
+		sphy1: switch_phy1@1 {
+			compatible = "ethernet-phy-id03a2.9481";
+			reg = <1>;
+			pinctrl-names = "gbe-led";
+			pinctrl-0 = <&gbe1_led0_pins>;
+			nvmem-cells = <&phy_calibration_p1>;
+			nvmem-cell-names = "phy-cal-data";
+		};
+
+		sphy2: switch_phy2@2 {
+			compatible = "ethernet-phy-id03a2.9481";
+			reg = <2>;
+			pinctrl-names = "gbe-led";
+			pinctrl-0 = <&gbe2_led0_pins>;
+			nvmem-cells = <&phy_calibration_p2>;
+			nvmem-cell-names = "phy-cal-data";
+		};
+
+		sphy3: switch_phy3@3 {
+			compatible = "ethernet-phy-id03a2.9481";
+			reg = <3>;
+			pinctrl-names = "gbe-led";
+			pinctrl-0 = <&gbe3_led0_pins>;
+			nvmem-cells = <&phy_calibration_p3>;
+			nvmem-cell-names = "phy-cal-data";
+		};
+	};
+};

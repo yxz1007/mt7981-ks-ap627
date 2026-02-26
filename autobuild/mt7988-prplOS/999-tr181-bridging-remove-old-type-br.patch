@@ -1,0 +1,12 @@
+diff -urN a/mod-bridging-uci/src/bridging_uci.c b/mod-bridging-uci/src/bridging_uci.c
+--- a/mod-bridging-uci/src/bridging_uci.c	2022-06-07 15:18:28.216239473 +0800
++++ b/mod-bridging-uci/src/bridging_uci.c	2022-06-07 15:18:56.664151739 +0800
+@@ -107,7 +107,7 @@
+     amxc_var_add_key(cstring_t, &uci_args, "type", "interface");
+     amxc_var_add_key(cstring_t, &uci_args, "name", bridge_name);
+     values = amxc_var_add_key(amxc_htable_t, &uci_args, "values", NULL);
+-    amxc_var_add_key(cstring_t, values, "type", "bridge");
++    //amxc_var_add_key(cstring_t, values, "type", "bridge");
+     // Needed so the empty bridge shows up in NetDev and the bridging manager can subscribe to it
+     amxc_var_add_key(bool, values, "bridge_empty", true);
+     amxc_var_add_key(bool, values, "disabled", !GETP_BOOL(args, "parameters.Enable"));

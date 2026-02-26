@@ -1,0 +1,282 @@
+// SPDX-License-Identifier: (GPL-2.0 OR MIT)
+/*
+ * Copyright (C) 2023 MediaTek Inc.
+ * Author: Sam.Shih <sam.shih@mediatek.com>
+ */
+
+/dts-v1/;
+#include "mt7987.dtsi"
+#include "mt7987-pinctrl.dtsi"
+#include "mt7987-netsys.dtsi"
+
+/ {
+	compatible = "mediatek,mt7987-fpga", "mediatek,mt7987";
+	chosen {
+                bootargs = "console=ttyS0,115200n1 loglevel=8 \
+			    earlycon=uart8250,mmio32,0x11000000, \
+			    failsafe=true";
+        };
+
+	memory {
+		reg = <0 0x40000000 0 0x10000000>;
+	};
+
+	cpus {
+		/delete-node/ cpu@1;
+		/delete-node/ cpu@2;
+		/delete-node/ cpu@3;
+	};
+};
+
+&clksys {
+	infracfg_ao@10001000 {
+		status = "disabled";
+	};
+
+	topckgen@1001b000 {
+		status = "disabled";
+	};
+
+	apmixedsys@1001e000 {
+		status = "disabled";
+	};
+
+	syscon@10060000 {
+		status = "disabled";
+	};
+
+	syscon@10070000 {
+		status = "disabled";
+	};
+
+	usxgmiisys@10080000 {
+		status = "disabled";
+	};
+
+	usxgmiisys@10081000 {
+		status = "disabled";
+	};
+
+	mcusys@100e0000 {
+		status = "disabled";
+	};
+
+	infracfg@10209000 {
+		status = "disabled";
+	};
+
+	syscon@15000000 {
+		status = "disabled";
+	};
+
+	syscon@15031000 {
+		status = "disabled";
+	};
+};
+
+&clkxtal {
+	clock-frequency = <12000000>;
+};
+
+/* Use MT7988 setting before MT7987 FPGA porting */
+&cpu0 {
+	compatible = "arm,cortex-a53";
+};
+
+&eth {
+	compatible = "mediatek,mt7988-eth";
+	reg = <0 0x15100000 0 0x80000>,
+	      <0 0x15400000 0 0x380000>;
+	clocks = <&clkxtal>,
+		 <&clkxtal>,
+		 <&clkxtal>,
+		 <&clkxtal>,
+		 <&clkxtal>,
+		 <&clkxtal>,
+		 <&clkxtal>,
+		 <&clkxtal>,
+		 <&clkxtal>,
+		 <&clkxtal>,
+		 <&clkxtal>,
+		 <&clkxtal>,
+		 <&clkxtal>,
+		 <&clkxtal>,
+		 <&clkxtal>,
+		 <&clkxtal>,
+		 <&clkxtal>,
+		 <&clkxtal>,
+		 <&clkxtal>,
+		 <&clkxtal>,
+		 <&clkxtal>,
+		 <&clkxtal>,
+		 <&clkxtal>,
+		 <&clkxtal>,
+		 <&clkxtal>,
+		 <&clkxtal>,
+		 <&clkxtal>,
+		 <&clkxtal>,
+		 <&clkxtal>,
+		 <&clkxtal>,
+		 <&clkxtal>,
+		 <&clkxtal>,
+		 <&clkxtal>,
+		 <&clkxtal>;
+	clock-names = "xgp1", "xgp2", "xgp3", "fe", "gp2", "gp1",
+		      "gp3", "esw", "crypto", "sgmii_tx250m",
+		      "sgmii_rx250m", "sgmii2_tx250m", "sgmii2_rx250m",
+		      "ethwarp_wocpu2", "ethwarp_wocpu1",
+		      "ethwarp_wocpu0", "top_usxgmii0_sel",
+		      "top_usxgmii1_sel", "top_sgm0_sel",
+		      "top_sgm1_sel", "top_xfi_phy0_xtal_sel",
+		      "top_xfi_phy1_xtal_sel", "top_eth_gmii_sel",
+		      "top_eth_refck_50m_sel", "top_eth_sys_200m_sel",
+		      "top_eth_sys_sel", "top_eth_xgmii_sel",
+		      "top_eth_mii_sel", "top_netsys_sel",
+		      "top_netsys_500m_sel", "top_netsys_pao_2x_sel",
+		      "top_netsys_sync_250m_sel",
+		      "top_netsys_ppefb_250m_sel",
+		      "top_netsys_warp_sel";
+	mediatek,ethsys = <&ethsys>;
+	mediatek,sgmiisys = <&sgmiisys0>, <&sgmiisys1>;
+	mediatek,usxgmiisys = <&usxgmiisys0>, <&usxgmiisys1>;
+	mediatek,xfi_pextp = <&xfi_pextp0>, <&xfi_pextp1>;
+	mediatek,xfi_pll = <&xfi_pll>;
+	mediatek,infracfg = <&topmisc>;
+	mediatek,toprgu = <&watchdog>;
+	mediatek,hwver = <&hwver>;
+	#reset-cells = <1>;
+	#address-cells = <1>;
+	#size-cells = <0>;
+	status = "disabled";
+};
+
+&ethwarp {
+	status = "disabled";
+};
+
+&gmac0 {
+	compatible = "mediatek,eth-mac";
+	reg = <0>;
+	mac-type = "xgdm";
+	phy-mode = "10gbase-kr";
+
+	fixed-link {
+		speed = <10000>;
+		full-duplex;
+		pause;
+	};
+};
+
+&gmac1 {
+	compatible = "mediatek,eth-mac";
+	reg = <1>;
+	mac-type = "xgdm";
+	phy-mode = "usxgmii";
+	phy-handle = <&phy0>;
+};
+
+&gmac2 {
+	compatible = "mediatek,eth-mac";
+	reg = <2>;
+	mac-type = "xgdm";
+	phy-mode = "usxgmii";
+	phy-handle = <&phy8>;
+};
+
+&hnat {
+	status = "disabled";
+};
+
+&mdio {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	clock-frequency = <10500000>;
+
+	phy0: ethernet-phy@0 {
+		reg = <0>;
+		compatible = "ethernet-phy-ieee802.3-c45";
+		reset-gpios = <&pio 72 1>;
+		reset-assert-us = <100000>;
+		reset-deassert-us = <221000>;
+		mdi-reversal = /bits/ 16 <1>;
+	};
+
+	phy8: ethernet-phy@8 {
+		reg = <8>;
+		compatible = "ethernet-phy-ieee802.3-c45";
+		reset-gpios = <&pio 71 1>;
+		reset-assert-us = <100000>;
+		reset-deassert-us = <221000>;
+		mdi-reversal = /bits/ 16 <1>;
+	};
+
+	switch: switch@0 {
+		compatible = "mediatek,mt7988";
+		reg = <31>;
+	};
+};
+
+&pcie2 {
+	clocks = <&clkxtal>,
+		 <&clkxtal>,
+		 <&clkxtal>,
+		 <&clkxtal>;
+	clock-names = "pl_250m", "tl_26m", "peri_26m", "top_133m";
+	status = "disabled";
+};
+
+&pcie3 {
+	clocks = <&clkxtal>,
+		 <&clkxtal>,
+		 <&clkxtal>,
+		 <&clkxtal>;
+	clock-names = "pl_250m", "tl_26m", "peri_26m", "top_133m";
+	status = "disabled";
+};
+
+&pcie0 {
+	clocks = <&clkxtal>,
+		 <&clkxtal>,
+		 <&clkxtal>,
+		 <&clkxtal>;
+	clock-names = "pl_250m", "tl_26m", "peri_26m", "top_133m";
+	status = "disabled";
+};
+
+&pcie1 {
+	clocks = <&clkxtal>,
+		 <&clkxtal>,
+		 <&clkxtal>,
+		 <&clkxtal>;
+	clock-names = "pl_250m", "tl_26m", "peri_26m", "top_133m";
+	status = "disabled";
+};
+
+&pio {
+	interrupts = <GIC_SPI 225 IRQ_TYPE_LEVEL_HIGH>;
+	status = "disabled";
+};
+
+/* Use MT7988 setting before MT7987 FPGA porting */
+&pmu {
+	compatible = "arm,cortex-a53-pmu";
+	interrupt-parent = <&gic>;
+	interrupts = <GIC_PPI 7 IRQ_TYPE_LEVEL_LOW>;
+};
+
+&switch0 {
+	status = "disabled";
+};
+
+&uart0 {
+	interrupts = <GIC_SPI 123 IRQ_TYPE_LEVEL_HIGH>;
+	clocks = <&clkxtal>;
+	clock-names = "bus";
+	/delete-property/ assigned-clocks;
+	/delete-property/ assigned-clock-parents;
+	status = "okay";
+};
+
+&watchdog {
+	status = "disabled";
+};

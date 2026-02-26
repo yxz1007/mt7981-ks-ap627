@@ -1,0 +1,14 @@
+---
+profiles:
+ - mediatek_mt7988a-dsa-10g-spim-nand
+ - mediatek_mt7988a-gsw-10g-spim-nand
+target: mediatek
+subtarget: mt7988
+description: Build image for the Mediatek MT7988
+packages:
+  - kmod-mt7996e
+  - mt76-vendor
+  - getopt
+
+diffconfig: |
+          CONFIG_PACKAGE_CFG80211_TESTMODE=y

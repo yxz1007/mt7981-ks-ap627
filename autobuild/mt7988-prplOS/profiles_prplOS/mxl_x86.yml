@@ -1,0 +1,152 @@
+---
+profiles:
+  - LGM_PRPL
+target: intel_x86
+subtarget: lgm
+external_target: True
+description: Build images for the Maxlinear x86 devices - URX
+             This target requires sources from MaxLinear, that are accessible via
+             git.maxlinear.com.
+             For reference boards, source code access and reporting issues,
+             please check https://gitlab.com/prpl-foundation/prplos/prplos/-/wikis/MaxLinear-Open-Service-Platform
+feeds:
+  - name: intel_x86
+    uri: git@git.maxlinear.com:ugw/feeds/feed_target_x86.git
+    tracking_branch: 8.9.2
+    revision: 4a373a03d699d12cfdf7a9125cfa9e2346a55efd
+  - name: rootfs
+    uri: git@git.maxlinear.com:ugw/rootfs.git
+    tracking_branch: 8.9.2
+    revision: ac49f429fff7dea6a2a3a132dff81ff1c21440d0
+  - name: 3rdparty
+    uri: git@git.maxlinear.com:ugw/feeds/feed_3rdparty.git
+    tracking_branch: 8.9.2
+    revision: ae5679e1d519c96052c9b25bf4f96524e6082fae
+  - name: datapath
+    uri: git@git.maxlinear.com:ugw/feeds/feed_datapath.git
+    tracking_branch: 8.9.2
+    revision: 7b2ed64d75c83245360cb89f4a35b62d43aed12d
+  - name: gphy_firmware
+    uri: git@git.maxlinear.com:ugw/feeds/feed_gphy_firmware.git
+    tracking_branch: 8.9.2
+    revision: 1e0b6baff05e55029b73475f7214d20c01d7651d
+  - name: gwdpa_dpm
+    uri: git@git.maxlinear.com:ugw/feeds/feed_gwdpa-dpm.git
+    tracking_branch: 8.9.2
+    revision: d838f75e31c26d5ff41dde2c02dbc14f4bd50521
+  - name: misc
+    uri: git@git.maxlinear.com:ugw/feeds/feed_common.git
+    tracking_branch: 8.9.2
+    revision: 0589cfeb2c43115790c72f24a97a128ba3351f84
+  - name: opensource_apps
+    uri: git@git.maxlinear.com:ugw/feeds/feed_opensource_apps.git
+    tracking_branch: 8.9.2
+    revision: 489e93be41dbdd143895d1bfd8ed49a17a79acfe
+  - name: packet_learn
+    uri: git@git.maxlinear.com:ugw/feeds/feed_packet_learn.git
+    tracking_branch: 8.9.2
+    revision: c78dbee647b16173320583400d34baeeaedf020e
+  - name: pon
+    uri: git@git.maxlinear.com:ugw/feeds/feed_gpon_onu.git
+    tracking_branch: 8.9.2
+    revision: 83cc9423ca6fa93f83ae3ed74c96a0dd690e60c2
+  - name: ppa
+    uri: git@git.maxlinear.com:ugw/feeds/feed_ppa.git
+    tracking_branch: 8.9.2
+    revision: ec858927c3467fd2b139d95ff25fbff9e1e93fba
+  - name: pp_net_adapter
+    uri: git@git.maxlinear.com:ugw/feeds/feed_pp_net_adapter.git
+    tracking_branch: 8.9.2
+    revision: 03b220c61ef12ac3ffe30c1f4d9d2b44e40b9a35
+  - name: vpn_fw
+    uri: git@git.maxlinear.com:ugw/feeds/feed_vpn_fw.git
+    tracking_branch: 8.9.2
+    revision: 1963b473f205a025d27596980dc44a34350ae99e
+  - name: wlan_6x
+    uri: git@git.maxlinear.com:ugw/feeds/feed_wlan_6x.git
+    tracking_branch: 8.9.2
+    revision: e61655861fd476450922c4c09f8a15f27675c266
+
+packages:
+  - kmod-intel_eth_drv
+  - kmod-gwdpa-dpm
+  - kmod-pp_net_adapter
+  - kmod-packet_learn
+  - ppv4-firmware-lgm
+  - kmod-intel_ppv4_fw_lgm
+  - kmod-ppv4
+  - kmod-p34x_phy_fwdl
+  - ltq-gphy-fw-lgm
+  - netifd-ugw
+  - dwpal_6x-uci
+  - iwlwav-base-files
+  - iwlwav-hostap-uci
+  - iwlwav-iw
+  - iwlwav-tools
+  - iwlwav-firmware
+  - iwinfo
+  - ltq-wlan-wave_6x-uci
+  - safeclibs3
+  - swpal_6x-uci
+  - e2fsprogs
+  - kmod-directconnect-dp
+  - kmod-ppa-drv
+  - kmod-ppa-drv-accel
+  - kmod-ppa-drv-gre
+  - kmod-ppa-drv-lgm
+  - kmod-ppa-drv-stack-al
+  - ppacmd
+  - kmod-intel_vpn
+  - kmod-intel_lgm_toe
+  - kmod-ipsec4
+  - kmod-ipsec6
+  - kmod-ipsec
+  - kmod-eip197
+  - vpn-firmware-lgm
+  - kmod-ipsec4-offload
+  - kmod-ipsec6-offload
+  - pon-libnl
+  - gpon-omci-onu
+  - pon-mcc-lib
+  - pon-lib
+  - pon-net-lib
+  - pon-tools
+  - base-files-platform-lgm
+  - pon-base-files
+  - pon-base-files-debug
+  - pon-base-files-prpl
+  - pon-lib-cli
+  - pon-lib-daemon
+  - ponmbox-cli
+  - pon-gpon-firmware-urx-b
+  - pon-xpon-firmware-urx-b
+  - pon-serdes-firmware-urx-b
+  - kmod-pon-mbox-drv-eth
+  - kmod-dp-eth-reinsert
+  - kmod-pon-mcc-drv
+  - kmod-pon-mcc-drv-filter
+  - kmod-intel_pon_hgu_vuni_lgm
+  - ethtool
+  - base-files-prpl
+  - ppmd
+  - pm-util
+  - kmod-intel-qos
+
+diffconfig: |
+  CONFIG_DEVEL=y
+  CONFIG_KERNEL_GIT_CLONE_URI="git@git.maxlinear.com:mxl/linux.git"
+  CONFIG_KERNEL_GIT_DEPTH=""
+  CONFIG_KERNEL_GIT_REF="8.9.2"
+  CONFIG_TOOLCHAINOPTS=y
+  CONFIG_GCC_USE_VERSION_8=y
+  CONFIG_GPON_OMCI_ONU_UBUS_INTERFACE=y
+  CONFIG_TARGET_OPTIONS=y
+  CONFIG_TARGET_OPTIMIZATION="-m64 -march=silvermont -mtune=intel -msse3 -mfpmath=sse -O2 -pipe -mindirect-branch=keep -mfunction-return=keep"
+  CONFIG_TARGET_MULTI_PROFILE=y
+  CONFIG_TARGET_PER_DEVICE_ROOTFS=y
+  CONFIG_TARGET_DEVICE_intel_x86_lgm_DEVICE_LGM_PRPL=y
+  CONFIG_INTEL_X86_ALT_SUBTARGET_CONFIG="b0"
+  CONFIG_BUILD_LOG=y
+  CONFIG_VERSION_FILENAMES=n
+  CONFIG_VERSION_CODE_FILENAMES=n
+  # CONFIG_PACKAGE_bios_images is not set

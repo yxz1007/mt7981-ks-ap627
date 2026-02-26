@@ -1,0 +1,5 @@
+---
+description: Use CCACHE
+diffconfig: |
+  CONFIG_CCACHE=y
+  CONFIG_DEVEL=y

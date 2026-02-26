@@ -1,0 +1,62 @@
+diff -urN a/include/linux/netdevice.h b/include/linux/netdevice.h
+--- a/include/linux/netdevice.h	2022-11-02 20:31:01.672299000 +0800
++++ b/include/linux/netdevice.h	2022-11-02 20:32:30.913335000 +0800
+@@ -2562,6 +2562,9 @@
+ int register_netdevice_notifier(struct notifier_block *nb);
+ int unregister_netdevice_notifier(struct notifier_block *nb);
+ 
++extern int register_net_in(struct notifier_block *nb); /* Click */
++extern int unregister_net_in(struct notifier_block *nb); /* Click */
++
+ struct netdev_notifier_info {
+ 	struct net_device	*dev;
+ 	struct netlink_ext_ack	*extack;
+diff -urN a/net/core/dev.c b/net/core/dev.c
+--- a/net/core/dev.c	2022-11-02 20:31:49.236304000 +0800
++++ b/net/core/dev.c	2022-11-02 20:35:24.110260000 +0800
+@@ -270,6 +270,9 @@
+ 
+ static RAW_NOTIFIER_HEAD(netdev_chain);
+ 
++/* input packet handlers -- might steal packets for Click. */
++static RAW_NOTIFIER_HEAD(net_in_chain);
++
+ /*
+  *	Device drivers call our routines to queue packets here. We empty the
+  *	queue in the local softnet handler.
+@@ -1669,6 +1672,25 @@
+ }
+ EXPORT_SYMBOL(unregister_netdevice_notifier);
+ 
++int register_net_in(struct notifier_block *nb)
++{
++	int err;
++	rtnl_lock();
++	err = raw_notifier_chain_register(&net_in_chain, nb);
++	rtnl_unlock();
++	return err;
++}
++EXPORT_SYMBOL(register_net_in);
++int unregister_net_in(struct notifier_block *nb)
++{
++	int err;
++	rtnl_lock();
++	err = raw_notifier_chain_unregister(&net_in_chain, nb);
++	rtnl_unlock();
++	return err;
++}
++EXPORT_SYMBOL(unregister_net_in);
++
+ /**
+  *	call_netdevice_notifiers_info - call all network notifier blocks
+  *	@val: value passed unmodified to notifier function
+@@ -4848,6 +4870,9 @@
+ 
+ 	if (pfmemalloc)
+ 		goto skip_taps;
++		
++	if(raw_notifier_call_chain(&net_in_chain, 0, skb) & NOTIFY_STOP_MASK)
++	        goto out;
+ 
+ 	list_for_each_entry_rcu(ptype, &ptype_all, list) {
+ 		if (pt_prev)

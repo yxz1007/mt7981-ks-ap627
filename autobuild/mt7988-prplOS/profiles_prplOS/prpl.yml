@@ -1,0 +1,199 @@
+---
+description: Add the prpl features
+feeds:
+  - name: feed_prpl
+    uri: https://gitlab.com/prpl-foundation/prplOS/feed-prpl.git
+    tracking_branch: prplos
+    revision: c6bb9f11acba0001c3647f2f55570cdab00143ba
+
+additional_packages:
+  - feed: packages
+    packages:
+      - chrony
+      - libnl-core
+      - libnl-route
+      - lighttpd
+      - lighttpd-mod-auth
+      - lighttpd-mod-authn_file
+      - lighttpd-mod-fastcgi
+
+packages:
+  - acl-manager
+  - amx-cli
+  - cthulhu
+  - cthulhu-lxc
+  - debug-information
+  - deviceinfo-manager
+  - dhcpv4-manager
+  - dhcpv6s-manager
+  - ethernet-manager
+  - gmap-client
+  - gmap-mod-ethernet-dev
+  - gmap-mod-name-selector
+  - gmap-mod-self
+  - gmap-server
+  - hosts-manager
+  - ip-manager
+  - iptables-mod-ipopt
+  - libarchive
+  - libdhcpoptions
+  - libfwinterface
+  - libfwrules
+  - libnetmodel
+  - libswla
+  - libswlc
+  - lua-amx
+  - lxc4
+  - lxc4-attach
+  - lxc4-auto
+  - lxc4-autostart
+  - lxc4-cgroup
+  - lxc4-checkconfig
+  - lxc4-common
+  - lxc4-config
+  - lxc4-configs
+  - lxc4-console
+  - lxc4-copy
+  - lxc4-create
+  - lxc4-destroy
+  - lxc4-device
+  - lxc4-execute
+  - lxc4-freeze
+  - lxc4-hooks
+  - lxc4-info
+  - lxc4-ls
+  - lxc4-monitor
+  - lxc4-start
+  - lxc4-stop
+  - lxc4-templates
+  - lxc4-top
+  - lxc4-unfreeze
+  - lxc4-unprivileged
+  - lxc4-unshare
+  - lxc4-user-nic
+  - lxc4-usernsexec
+  - lxc4-wait
+  - mod-amxb-ubus
+  - mod-autosensing
+  - mod-ba-cli
+  - mod-dmext
+  - mod-dmstats
+  - mod-fw-amx
+  - mod-fw-host
+  - mod-httpaccess-lighttpd
+  - mod-lua-amx
+  - mod-qos-tc
+  - mod-sahtrace
+  - mod-vlan-ioctl
+  - mod-xpon-prpl
+  - multisettings
+  - netdev-plugin
+  - netmodel
+  - netmodel-bridge
+  - netmodel-clients
+  - netmodel-dhcpv4
+  - netmodel-dhcpv6
+  - netmodel-ethernet
+  - netmodel-ip
+  - netmodel-iprouter
+  - netmodel-logical
+  - netmodel-netdev
+  - netmodel-ppp
+  - netmodel-radio
+  - netmodel-ssid
+  - netmodel-vlan
+  - odl-generator
+  - packet-interception
+  - pcm-manager
+  - prplmesh
+  - pwhm
+  - rlyeh
+  - routing-manager
+  - ssh-server
+  - syslog-ng
+  - tc
+  - time-manager
+  - timingila
+  - timingila-cthulhu
+  - timingila-rlyeh
+  - tr069-manager
+  - tr181-bridging
+  - tr181-device
+  - tr181-dhcpv4client
+  - tr181-dhcpv6client
+  - tr181-dns
+  - tr181-dnssd
+  - tr181-dslite
+  - tr181-dynamicdns
+  - tr181-firewall
+  - tr181-httpaccess
+  - tr181-logical
+  - tr181-neighbordiscovery
+  - tr181-pcp
+  - tr181-ppp
+  - tr181-qos
+  - tr181-rest-api
+  - tr181-routeradvertisement
+  - tr181-upnp
+  - tr181-usermanagement
+  - tr181-xpon
+  - umdns
+  - wan-manager
+
+diffconfig: |
+          CONFIG_PACKAGE_rpcd-mod-luci=y
+          CONFIG_PACKAGE_ip-full=y
+          CONFIG_PACKAGE_ip-bridge=y
+          CONFIG_SYSLOGNG_LOGROTATE=y
+          CONFIG_SYSLOGNG_LOGROTATE_MAXSIZE="5M"
+          CONFIG_PACKAGE_mod-xpon-prpl-mock=m
+          # CONFIG_PACKAGE_firewall is not set
+          # CONFIG_PACKAGE_logd is not set
+          # lxc options for LCM
+          CONFIG_SAH_SERVICES_CTHULHU_INIT_CONTAINER_BACKEND=y
+          CONFIG_SAH_SERVICES_CTHULHU_CONTAINER_BACKEND="/usr/lib/cthulhu-lxc/cthulhu-lxc.so"
+          CONFIG_SAH_SERVICES_TIMINGILA_INIT_ADAPTERS=y
+          CONFIG_SAH_SERVICES_TIMINGILA_ADAPTER_PACKAGER="/usr/lib/timingila-rlyeh/timingila-rlyeh.so"
+          CONFIG_SAH_SERVICES_TIMINGILA_ADAPTER_CONTAINER="/usr/lib/timingila-cthulhu/timingila-cthulhu.so"
+          CONFIG_SAH_LIB_CTHULHU-LXC_LXC_TOOLS_PREFIX="/opt/prplos/usr/bin/"
+          CONFIG_SAH_LIB_CTHULHU-LXC_PRPL_OS_RPATH=y
+          # pwhm options
+          CONFIG_USE_PRPLMESH_WHM=y
+          CONFIG_SAH_WLD_INIT_SCRIPT="prplmesh_whm"
+          CONFIG_PACKAGE_prplmesh-unit-tests=m
+          # kernel options for lcm
+          CONFIG_KERNEL_ARM_PMU=y
+          CONFIG_KERNEL_BLK_CGROUP=y
+          CONFIG_KERNEL_BLK_DEV_THROTTLING=y
+          CONFIG_KERNEL_CGROUPS=y
+          CONFIG_KERNEL_CGROUP_CPUACCT=y
+          CONFIG_KERNEL_CGROUP_DEVICE=y
+          CONFIG_KERNEL_CGROUP_FREEZER=y
+          CONFIG_KERNEL_CGROUP_PERF=y
+          CONFIG_KERNEL_CGROUP_PIDS=y
+          CONFIG_KERNEL_CGROUP_SCHED=y
+          CONFIG_KERNEL_CPUSETS=y
+          CONFIG_KERNEL_DEVPTS_MULTIPLE_INSTANCES=y
+          CONFIG_KERNEL_FAIR_GROUP_SCHED=y
+          CONFIG_KERNEL_FREEZER=y
+          CONFIG_KERNEL_IPC_NS=y
+          CONFIG_KERNEL_LXC_MISC=y
+          CONFIG_KERNEL_MEMCG=y
+          CONFIG_KERNEL_MEMCG_KMEM=y
+          CONFIG_KERNEL_MEMCG_SWAP=y
+          CONFIG_KERNEL_MEMCG_SWAP_ENABLED=y
+          CONFIG_KERNEL_MM_OWNER=y
+          CONFIG_KERNEL_NAMESPACES=y
+          CONFIG_KERNEL_NETPRIO_CGROUP=y
+          CONFIG_KERNEL_NET_CLS_CGROUP=y
+          CONFIG_KERNEL_NET_NS=y
+          CONFIG_KERNEL_PERF_EVENTS=y
+          CONFIG_KERNEL_PID_NS=y
+          CONFIG_KERNEL_POSIX_MQUEUE=y
+          CONFIG_KERNEL_PROC_PID_CPUSET=y
+          CONFIG_KERNEL_RESOURCE_COUNTERS=y
+          CONFIG_KERNEL_RT_GROUP_SCHED=y
+          CONFIG_KERNEL_SECCOMP=y
+          CONFIG_KERNEL_SECCOMP_FILTER=y
+          CONFIG_KERNEL_USER_NS=y
+          CONFIG_KERNEL_UTS_NS=y
