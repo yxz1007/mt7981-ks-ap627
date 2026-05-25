@@ -6,6 +6,11 @@ FEATURES:=squashfs nand ramdisk
 
 KERNELNAME:=Image dtbs
 
+DEFAULT_PACKAGES += \
+    uboot-envtools \
+    kmod-mt7981-firmware \
+    macaddr
+
 define Target/Description
 	Build firmware images for MediaTek MT7981 ARM based boards.
 endef

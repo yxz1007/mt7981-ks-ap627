@@ -1,6 +1,6 @@
 # OpenWRT Firmware for KS-AP627
 
-this is OpenWRT firmware for the KS-AP627, 11ax dual band 3000Mbps data rate, this product is based on MTK chipset: MT7981+MT7976C+MT7531AE, Can be NOR 16/32MB flash + 256/512MB DRAM; Optional 128MB NAND flash+256/512MB DRAM; 48V PoE with 88 video users
+This is OpenWRT firmware for the KS-AP627, 11ax dual band 3000Mbps data rate, this product is based on MTK chipset: MT7981+MT7976C+MT7531AE, Can be NOR 16/32MB flash + 256/512MB DRAM; Optional 128MB NAND flash+256/512MB DRAM; 48V PoE with 88 video users
 
 
 ![OpenWrt logo](include/logo.png)

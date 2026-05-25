@@ -498,5 +498,23 @@ define Device/ks-ap627
 endef
 TARGET_DEVICES += ks-ap627
 
+
+define Device/pronto-pc64-mt7981-spim-nand-2
+  DEVICE_VENDOR := PRONTO
+  DEVICE_MODEL := PC64
+  DEVICE_DTS := pronto-pc64-mt7981-spim-nand-2
+  DEVICE_DTS_DIR := $(DTS_DIR)/mediatek
+  SUPPORTED_DEVICES := pronto-pc64-mt7981-spim-nand-2
+  UBINIZE_OPTS := -E 5
+  BLOCKSIZE := 128k
+  PAGESIZE := 2048
+  IMAGE_SIZE := 65536k
+  KERNEL_IN_UBI := 1
+  IMAGES += factory.bin
+  IMAGE/factory.bin := append-ubi | check-size $$$$(IMAGE_SIZE)
+  IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
+endef
+TARGET_DEVICES += pronto-pc64-mt7981-spim-nand-2
+
 DEFAULT_DEVICE_VARS += FIT_KEY_DIR ROE_KEY_DIR FIT_KEY_NAME ROE_KEY_NAME FIRMWARE_ENC_ALGO ANTI_ROLLBACK_TABLE AUTO_AR_CONF HASHED_BOOT_DEVICE BASIC_KERNEL_CMDLINE
 

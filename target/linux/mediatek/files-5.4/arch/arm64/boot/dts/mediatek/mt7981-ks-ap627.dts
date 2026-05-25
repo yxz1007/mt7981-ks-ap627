@@ -56,6 +56,21 @@
 			factory: partition@180000 {
 				label = "Factory";
 				reg = <0x180000 0x0200000>;
+
+				#nvmem-cells = <1>;
+        			#size-cells = <1>;
+
+        			macaddr_gmac0: macaddr@0 {
+                			reg = <0x0 0x6>;
+        			};
+
+        			macaddr_gmac1: macaddr@6 {
+                			reg = <0x6 0x6>;
+        			};
+
+        			phy_calibration_factory: cal@1f000 {
+                			reg = <0x1f000 0x1000>;
+        			};
 			};
 
 			partition@380000 {
@@ -65,7 +80,7 @@
 
 			partition@580000 {
 				label = "ubi";
-				reg = <0x580000 0x4000000>;
+				reg = <0x580000 0x7800000>;
 			};
 		};
 	};
@@ -122,6 +137,9 @@
                 reg = <0>;
                 phy-mode = "2500base-x";
 
+                nvmem-cells = <&macaddr_gmac0>;
+		nvmem-cell-names = "mac-address";
+
                 fixed-link {
                         speed = <2500>;
                         full-duplex;
@@ -134,6 +152,9 @@
 		reg = <1>;
 		phy-mode = "gmii";
 		phy-handle = <&phy0>;
+
+		nvmem-cells = <&macaddr_gmac1>;
+		nvmem-cell-names = "mac-address";
 	};
 
         mdio: mdio-bus {
@@ -144,7 +165,7 @@
 			compatible = "ethernet-phy-id03a2.9461";
 			reg = <0>;
 			phy-mode = "gmii";
-			nvmem-cells = <&phy_calibration>;
+			nvmem-cells = <&phy_calibration_factory>;
 			nvmem-cell-names = "phy-cal-data";
 		};
 
